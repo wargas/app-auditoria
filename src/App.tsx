@@ -1,21 +1,17 @@
 import { open } from '@tauri-apps/plugin-dialog'
-import Database from '@tauri-apps/plugin-sql';
-import { BaseDirectory, readTextFile } from '@tauri-apps/plugin-fs'
-import * as path from '@tauri-apps/api/path'
 
 import { Button } from "#components/ui/button";
 import { Input } from "#components/ui/input";
 import { Field, FieldContent, FieldLabel } from "#components/ui/field";
 
 import "./App.css";
-import { startTransition, useState, useTransition } from 'react';
+import { useState } from 'react';
 import { InputGroup, InputGroupButton, InputGroupInput } from '#components/ui/input-group';
 import { readFileByLine } from '#lib/utils';
 import { Progress } from '#components/ui/progress';
 
 function App() {
 
-  const [transition, setTransition] = useTransition()
   const [files, setFiles] = useState<Record<string, string[]>>({})
   const [cnpj, setCNPJ] = useState(``)
   const [progress, setProgress] = useState(0)
