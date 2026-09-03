@@ -14,11 +14,10 @@ jobs:
       - name: Baixar código
         uses: actions/checkout@v4
 
-      - name: Configurar Node.js
-        uses: actions/setup-node@v4
+      - name: Configurar Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: lts/*
-          cache: npm
+          bun-version: latest
 
       - name: Configurar Rust
         uses: dtolnay/rust-toolchain@stable
@@ -29,10 +28,10 @@ jobs:
           workspaces: "./src-tauri -> target"
 
       - name: Instalar dependências do frontend
-        run: npm install
+        run: bun install --frozen-lockfile
 
       - name: Build do Tauri para Windows
-        run: npm run tauri build
+        run: bun run tauri build
 
       - name: Salvar instaladores como artefatos
         uses: actions/upload-artifact@v4
