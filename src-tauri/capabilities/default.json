@@ -3,7 +3,7 @@
   "identifier": "default",
   "description": "Capability for the main window",
   "windows": [
-    "main"
+    "main", "new-project", "project"
   ],
   "permissions": [
     "core:default",
@@ -13,6 +13,10 @@
     "sql:allow-execute",
     "fs:default",
     "fs:allow-app-read",
-    "fs:allow-app-read-recursive"
+    "fs:allow-app-read-recursive",
+    "core:webview:allow-create-webview-window",
+    "core:webview:allow-webview-close",
+    "core:window:allow-close",
+    "core:window:allow-get-all-windows"
   ]
 }
