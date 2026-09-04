@@ -30,7 +30,7 @@ export function Component() {
             url: `/#project/${id}`,
             title: name,
             width: 900,
-            height: 380
+            height: 380,
         })
 
         win.once('tauri://error', console.log)

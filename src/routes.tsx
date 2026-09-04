@@ -10,6 +10,24 @@ export const routes = createHashRouter([
     },
     {
         path: '/project/:id',
-        lazy: () => import('./routes/project.router')
+        lazy: () => import('./routes/project.router'),
+        children: [
+            {
+                path: '',
+                lazy: () => import('./routes/project-home')
+            },
+            {
+                path: 'arquivos',
+                lazy: () => import('./routes/upload-arquivos.router')
+            },
+            {
+                path: 'apuracao',
+                lazy: () => import('./routes/apuracao.router')
+            },
+            {
+                path: 'outros-creditos',
+                lazy: () => import('./routes/outros-creditos.router')
+            }
+        ]
     },
 ])
