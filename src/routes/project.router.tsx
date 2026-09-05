@@ -1,17 +1,26 @@
-import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubItem, SidebarProvider, SidebarTrigger } from "#components/ui/sidebar"
-import { ChartArea, FileText, Upload } from "lucide-react"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "#components/ui/collapsible"
+import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuAction, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubItem, SidebarProvider, SidebarTrigger } from "#components/ui/sidebar"
+import { ChartArea, ChevronDown, FileText, HomeIcon, Upload } from "lucide-react"
 import { Link, Outlet, useParams } from "react-router"
 
 export function Component() {
     const params = useParams()
     return <div>
         <SidebarProvider>
-            <Sidebar variant="sidebar">
+            <Sidebar variant="floating" collapsible="icon">
                 <SidebarContent>
                     <SidebarGroup>
                         <SidebarGroupLabel>MENU</SidebarGroupLabel>
                         <SidebarGroupContent>
                             <SidebarMenu>
+                                <SidebarMenuItem>
+                                    <SidebarMenuButton asChild>
+                                        <Link to={`/project/${params.id}`}>
+                                            <HomeIcon />
+                                            Home
+                                        </Link>
+                                    </SidebarMenuButton>
+                                </SidebarMenuItem>
                                 <SidebarMenuItem>
                                     <SidebarMenuButton asChild>
                                         <Link to={`/project/${params.id}/arquivos`}>
@@ -36,26 +45,37 @@ export function Component() {
                                         </Link>
                                     </SidebarMenuButton>
                                 </SidebarMenuItem>
-                                <SidebarMenuItem>
-                                    <SidebarMenuButton>
-                                        <FileText />
-                                        Relatorios</SidebarMenuButton>
-                                    <SidebarMenuSub>
-                                        <SidebarMenuSubItem>
-                                            <SidebarMenuButton>Notas nao escrituradas</SidebarMenuButton>
-                                        </SidebarMenuSubItem>
-                                        <SidebarMenuSubItem>
-                                            <SidebarMenuButton>Notas escrituradas com valor a menor</SidebarMenuButton>
-                                        </SidebarMenuSubItem>
-                                    </SidebarMenuSub>
-                                </SidebarMenuItem>
+                                <Collapsible>
+                                    <SidebarMenuItem>
+                                        <CollapsibleTrigger asChild>
+                                            <SidebarMenuButton>
+                                                <FileText />
+                                                Relatorios
+
+                                                <SidebarMenuAction>
+                                                    <ChevronDown />
+                                                </SidebarMenuAction>
+                                            </SidebarMenuButton>
+                                        </CollapsibleTrigger>
+                                        <CollapsibleContent asChild>
+                                            <SidebarMenuSub>
+                                                <SidebarMenuSubItem>
+                                                    <SidebarMenuButton>Notas nao escrituradas</SidebarMenuButton>
+                                                </SidebarMenuSubItem>
+                                                <SidebarMenuSubItem>
+                                                    <SidebarMenuButton>Notas escrituradas com valor a menor</SidebarMenuButton>
+                                                </SidebarMenuSubItem>
+                                            </SidebarMenuSub>
+                                        </CollapsibleContent>
+                                    </SidebarMenuItem>
+                                </Collapsible>
                             </SidebarMenu>
                         </SidebarGroupContent>
                     </SidebarGroup>
                 </SidebarContent>
             </Sidebar>
             <main className="w-full h-screen overflow-hidden">
-                <div className="h-12">
+                <div className="h-12 flex items-center px-4">
                     <SidebarTrigger />
                 </div>
                 <Outlet />

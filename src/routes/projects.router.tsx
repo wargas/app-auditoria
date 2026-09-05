@@ -25,17 +25,22 @@ export function Component() {
 
     async function abrirProjeto(id: string, name: string) {
 
-        console.log(`abrir janela`)
+        let size = {
+            width: 1220,
+            height: 768,
+        }
+        
         const win = new WebviewWindow('project', {
             url: `/#project/${id}`,
             title: name,
-            width: 900,
-            height: 380,
+            ...size,
         })
 
         win.once('tauri://error', console.log)
 
         win.once('tauri://destroyed', loadProjetos)
+
+        
     }
 
 
