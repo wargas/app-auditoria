@@ -3,16 +3,33 @@ import { Card, CardContent, CardDescription, CardTitle } from "#components/ui/ca
 import { Spinner } from "#components/ui/spinner"
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { useApp } from "../app-context"
+import { Field, FieldLabel } from "#components/ui/field"
+import { Input } from "#components/ui/input"
 
 export function Component() {
 
     const app = useApp()
+    const db = app.db!
 
+    const queryCadastro = useQuery({
+        queryKey: ["cadastro"],
+        queryFn: async () => {
+            const result = await db.select<{cnpj:string, nome: string, ie: string}[]>('select * from cadastro limit 1')
+
+            if(result.length == 0 ) {
+                return  {cnpj: '', nome: '', ie: ''}
+            }
+
+            return result[0]
+        }
+    })
+
+    
 
     const queryDF = useQuery({
         queryKey: ["count_sped"],
         queryFn: async () => {
-            const db = app.db!
+
 
             return db.select<any[]>('select count(*) as count from sped_df')
         }
@@ -21,8 +38,6 @@ export function Component() {
     const queryNFCENE = useQuery({
         queryKey: ["count_nfcene"],
         queryFn: async () => {
-            const db = app.db!
-
             return db.select<any[]>('select count(*) as count from (select chave from nfce_sem_escrituracao group by chave) tb')
         }
     })
@@ -30,8 +45,6 @@ export function Component() {
     const queryNFENE = useQuery({
         queryKey: ["count_nfene"],
         queryFn: async () => {
-            const db = app.db!
-
             return db.select<any[]>('select count(*) as count from (select chave from nfe_sem_escrituracao group by chave) tb')
         }
     })
@@ -49,15 +62,38 @@ export function Component() {
         }
     })
 
-    return <div className="p-4">
-        <Button onClick={() => mutationRelatorios.mutate()}>
-            {mutationRelatorios.isPending && (
-                <Spinner />
-            )}
-            Atualizar Relatorios
-        </Button>
+    return <div className="p-4 flex flex-col gap-4">
 
-        <div className="grid grid-cols-3 gap-4 mt-4">
+        <div>
+            <Button onClick={() => mutationRelatorios.mutate()}>
+                {mutationRelatorios.isPending && (
+                    <Spinner />
+                )}
+                Atualizar Relatorios
+            </Button>
+        </div>
+
+        <div className="flex gap-4">
+                <Field className="flex-5">
+                    <FieldLabel>CNPJ</FieldLabel>
+                    
+                    <Input disabled value={queryCadastro.data?.cnpj} />
+                </Field>
+
+                <Field className="flex-12">
+                    <FieldLabel>NOME</FieldLabel>
+                    
+                    <Input disabled value={queryCadastro.data?.nome} />
+                </Field>
+
+                <Field className="flex-4">
+                    <FieldLabel>IE</FieldLabel>
+                    
+                    <Input disabled value={queryCadastro.data?.ie} />
+                </Field>
+        </div>
+
+        <div className="grid grid-cols-3 gap-4 ">
 
             <Card>
                 <CardContent>
@@ -84,7 +120,7 @@ export function Component() {
             <Card>
                 <CardContent>
                     <CardTitle className="text-4xl">
-                        {queryNFCENE.data?.find(_ => true)?.count} 
+                        {queryNFCENE.data?.find(_ => true)?.count}
                     </CardTitle>
                     <CardDescription>
                         NFCE nao Escriturados

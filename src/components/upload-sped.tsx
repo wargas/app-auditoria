@@ -50,7 +50,7 @@ export function UploadSped() {
         // setCountReadFiles(0)
         await db.execute('drop table if exists sped_temp; create table sped_temp (registro text, periodo, line text)');
 
-        const registros = ['E110', 'E111', 'C100']
+        const registros = ['0000','E110', 'E111', 'C100']
 
         const count = {
             files: 1,
@@ -69,7 +69,9 @@ export function UploadSped() {
 
                 if (lineAbertura) {
                     const partes = lineAbertura.split('|')
-                    periodo = partes[4].substring(2)
+
+                    await db.execute(`insert or ignore into cadastro (cnpj, nome, ie) values ($1, $2, $3)`, [partes[7], partes[6], partes[10]])
+
                 }
 
                 const linesSelecionadas = lines.filter(l => {

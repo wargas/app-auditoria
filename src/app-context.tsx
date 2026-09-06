@@ -61,6 +61,7 @@ export function AppProvider({ children }: ComponentProps<"div">) {
             await db.execute(`create table if not exists ajuste_creditos (periodo text, codigo text, descricao text, valor float, line text)`)
             await db.execute(`create table if not exists nfce (id text primary key, chave text, valor_icms float, line text)`)
             await db.execute(`create table if not exists nfe (id text primary key, chave text, emitente text, destinatario text, tipo_operacao text, valor_icms float, line text)`)
+            await db.execute(`create table if not exists cadastro (cnpj text primary key, nome text, ie text)`)
 
             await setProject(pathDb)
 
