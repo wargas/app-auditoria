@@ -6,6 +6,7 @@ import { RouterProvider } from "react-router";
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query'
 import { routes } from "./routes";
 import "./App.css";
+import { AppProvider } from "./app-context";
 
 const queryClient = new QueryClient()
 
@@ -14,7 +15,9 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
     <TooltipProvider>
       <QueryClientProvider client={queryClient}>
         <div className="h-screen">
-          <RouterProvider router={routes} />
+          <AppProvider>
+            <RouterProvider router={routes} />
+          </AppProvider>
         </div>
       </QueryClientProvider>
     </TooltipProvider>

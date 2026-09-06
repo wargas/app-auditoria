@@ -1,4 +1,3 @@
-import { getProjectDb } from "#lib/database";
 import { Button } from "./ui/button";
 import { Field, FieldContent, FieldLabel } from "./ui/field";
 import { open } from '@tauri-apps/plugin-dialog'
@@ -10,9 +9,11 @@ import { Spinner } from "./ui/spinner";
 import { readFileStream } from "#lib/utils";
 import prettyBytes from 'pretty-bytes'
 import Papa from 'papaparse';
+import { useApp } from "../app-context";
 
-export function UploadNFE({ id }: { id: string }) {
+export function UploadNFE() {
 
+    const app = useApp()
     const [progress, setProgress] = useState(0)
     const [message, setMessage] = useState('')
 
@@ -42,12 +43,16 @@ export function UploadNFE({ id }: { id: string }) {
 
         if (!filesSpeed) return;
 
-        mutation.mutate(filesSpeed)
+        mutation.mutate(filesSpeed, {
+            onError: (error) => {
+                console.log(error)
+            }
+        })
     }
 
-    async function processar(filesNFCE: string[]) {
-
-        const db = await getProjectDb(id)
+    async function processar(files: string[]) {
+        
+        const db = app.db!
         await db.execute('drop table if exists nfe_temp; create table nfe_temp (line text)');
 
         setMessage(`processando...`)
@@ -58,7 +63,7 @@ export function UploadNFE({ id }: { id: string }) {
             lines: 0
         }
 
-        for await (const file of filesNFCE) {
+        for await (const file of files) {
             //   setProgress(0)
 
             updateProgress(0)
@@ -88,7 +93,7 @@ export function UploadNFE({ id }: { id: string }) {
                 updateProgress((fileBytesRead / size) * 100)
                 // console.log(lines);
 
-                setMessage(`${count.files} de ${filesNFCE.length} (${prettyBytes(fileBytesRead)} de ${prettyBytes(size)})`)
+                setMessage(`${count.files} de ${files.length} (${prettyBytes(fileBytesRead)} de ${prettyBytes(size)})`)
             }
 
             count.files++

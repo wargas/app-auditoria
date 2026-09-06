@@ -1,4 +1,5 @@
 import { open } from "@tauri-apps/plugin-fs"
+import { load } from "@tauri-apps/plugin-store"
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 
@@ -29,26 +30,19 @@ export async function* readFileStream(path: string, bufferSize = 1024) {
 
     yield { lines, size: stat.size, fileBytesRead }
   }
-  
 
-  return ;
+
+  return;
 }
 
+export async function getProject() {
+  const store = await load('auditoria.json')
 
-export function normalizeCSV(line:string) {
-  let normalizeLine = line.replace(/;\s+/g, ";").replace(/\s+;/g, ";")
-        .replace(/^"/, "[@@@]")
-        .replace(/"$/, "[@@@]")
-        .replace(/";"/g, "[@@]")
-        .replace(/"/g, "")
-        .replace(/\[@@\]/g, '";"')
-        .replace(/\[@@@\]/g, '"')
+  return await store.get<string>('project-path')
+}
 
-    normalizeLine.match(/"(.*?)"/g)?.forEach(m => {
-        if(m.includes(";")) {
-            normalizeLine = normalizeLine.replace(m, m.replace(/;/g, "_"))
-        }
-    })
+export async function setProject(path: string) {
+  const store = await load('auditoria.json')
 
-    return normalizeLine   
+  return await store.set('project-path', path)
 }

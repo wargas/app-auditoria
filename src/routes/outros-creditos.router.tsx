@@ -1,16 +1,15 @@
 import { Grid } from "#components/grid"
-import { getProjectDb } from "#lib/database"
 import { useQuery } from "@tanstack/react-query"
-import { useParams } from "react-router"
+import { useApp } from "../app-context"
 
 export function Component() {
 
-    const params = useParams()
+    const app = useApp()
 
     const query = useQuery({
         queryKey: ["apuracao"],
         queryFn: async () => {
-            const db = await getProjectDb(params.id!)
+            const db = app.db!
 
             return db.select<any[]>('select * from ajuste_creditos')
         }

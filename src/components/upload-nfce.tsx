@@ -1,4 +1,3 @@
-import { getProjectDb } from "#lib/database";
 import { Button } from "./ui/button";
 import { Field, FieldContent, FieldLabel } from "./ui/field";
 import { open } from '@tauri-apps/plugin-dialog'
@@ -10,9 +9,11 @@ import { Spinner } from "./ui/spinner";
 import { readFileStream } from "#lib/utils";
 import prettyBytes from 'pretty-bytes'
 import Papa from "papaparse";
+import { useApp } from "../app-context";
 
-export function UploadNFCE({ id }: { id: string }) {
+export function UploadNFCE() {
 
+    const app = useApp()
     const [progress, setProgress] = useState(0)
     const [message, setMessage] = useState('')
 
@@ -47,7 +48,7 @@ export function UploadNFCE({ id }: { id: string }) {
 
     async function processar(filesNFCE: string[]) {
 
-        const db = await getProjectDb(id)
+        const db = app.db!
         await db.execute('drop table if exists nfce_temp; create table nfce_temp (line text)');
 
         setMessage(`processando...`)

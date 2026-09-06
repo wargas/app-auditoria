@@ -1,4 +1,3 @@
-import { getProjectDb } from "#lib/database";
 import { Button } from "./ui/button";
 import { Field, FieldContent, FieldLabel } from "./ui/field";
 import { open } from '@tauri-apps/plugin-dialog'
@@ -8,15 +7,26 @@ import { Progress } from "./ui/progress";
 import { useMutation } from "@tanstack/react-query";
 import { Check } from "lucide-react";
 import { Spinner } from "./ui/spinner";
+import { useApp } from "../app-context";
+import prettyBytes from "pretty-bytes";
 
-export function UploadSped({ id }: { id: string }) {
+export function UploadSped() {
+
+    const app = useApp()
+
+    const db = app.db!
 
     const [progress, setProgress] = useState(0)
     const [message, setMessage] = useState('')
 
 
+
     const mutation = useMutation({
-        mutationFn: processarSped
+        mutationFn: processarSped,
+        onError: () => {
+            console.log(`error`)
+        },
+        throwOnError: true
     })
 
     async function selectFiles() {
@@ -31,9 +41,7 @@ export function UploadSped({ id }: { id: string }) {
     }
 
     async function processarSped(filesSpeed: string[]) {
-
-        const db = await getProjectDb(id)
-
+        
         await db.execute('delete from apuracao');
         await db.execute('delete from ajuste_creditos');
         await db.execute('delete from sped_df');
@@ -88,13 +96,12 @@ export function UploadSped({ id }: { id: string }) {
                 count.lines += lines.length
                 const newProgress = (fileBytesRead / size) * 100
                 setProgress(p => (newProgress - p) > 10 ? newProgress : p)
-                setMessage(`${count.files} de ${filesSpeed.length} (${count.lines}) linhas)`)
+                 setMessage(`${count.files} de ${filesSpeed.length} (${prettyBytes(fileBytesRead)} de ${prettyBytes(size)})`)
 
             }
 
             setProgress(100)
 
-            setMessage(`${count.files} de ${filesSpeed.length} (${count.lines}) linhas)`)
             count.files++
 
 
@@ -115,7 +122,7 @@ export function UploadSped({ id }: { id: string }) {
         `);
 
         await db.execute(`
-            insert or ignore into ajuste_creditos select 
+            insert or ignore into ajuste_creditos (periodo, codigo, descricao, valor) select 
             periodo,
             json_extract(line, '$[2]') codigo,
             json_extract(line, '$[3]') descricao,
