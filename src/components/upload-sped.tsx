@@ -72,6 +72,7 @@ export function UploadSped() {
 
                     await db.execute(`insert or ignore into cadastro (cnpj, nome, ie) values ($1, $2, $3)`, [partes[7], partes[6], partes[10]])
 
+                    periodo = partes[4]
                 }
 
                 const linesSelecionadas = lines.filter(l => {
