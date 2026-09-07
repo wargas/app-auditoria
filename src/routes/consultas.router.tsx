@@ -1,24 +1,63 @@
 import { Grid } from '#components/grid';
 import { Button } from '#components/ui/button';
-import Editor from '@monaco-editor/react';
-import { useCallback, useMemo, useState } from 'react';
+import Editor, { OnMount } from '@monaco-editor/react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useApp } from '../app-context';
 import _, { filter, uniqBy } from 'lodash'
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '#components/ui/resizable';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuAction, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem } from '#components/ui/sidebar';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '#components/ui/collapsible';
-import { ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Spinner } from '#components/ui/spinner';
 import { save } from '@tauri-apps/plugin-dialog';
 import { create } from '@tauri-apps/plugin-fs';
+import { Input } from '#components/ui/input';
+import { editor } from 'monaco-editor';
 
 export function Component() {
     const app = useApp()
     const db = app.db!
-    const [sql, setSql] = useState('')
-    const [result, setResult] = useState<any[]>([])
     const [message, setMessage] = useState('')
+    const [page, setPage] = useState(1)
+
+    const editorRef = useRef<editor.IStandaloneCodeEditor>(null)
+
+    const queryResult = useQuery({
+        queryKey: ['query-result'],
+        queryFn: async () => {
+            try {
+
+                const timeStart = new Date().getTime()
+                const sql = editorRef.current?.getValue() || ""
+
+                const limit = 100;
+                const offset = (page - 1) * limit
+
+                const queryWrap = `select * from (${sql}) limit ${offset}, ${limit}`
+                const query = await db.select<any[]>(queryWrap)
+
+                const sqlCount = `select count(*) as c from (${sql})`
+
+                const queryCount = await db.select(sqlCount)
+
+                const count = _.get(queryCount, '0.c')
+
+                const endTime = new Date().getTime()
+
+                setMessage(`${count} linhas em ${endTime-timeStart} ms`)
+
+                return {
+                    count, result: query
+                }
+                // setResult(query.map((q, i) => ({ '#': i + 1, ...q })))
+            } catch (e) {
+                setMessage(String(e))
+                return { result: [], count: 0}
+            }
+        },
+        enabled: !!editorRef.current?.getValue()
+    })
 
     async function selectFileExport() {
         const res = await save({
@@ -37,9 +76,10 @@ export function Component() {
     const mutationExportCSV = useMutation({
         mutationFn: async (path: string) => {
             try {
+                const sql = editorRef.current?.getValue() || ''
                 const rows = await db.select<any[]>(sql)
 
-                if(rows.length == 0) return;
+                if (rows.length == 0) return;
 
                 const cols = Object.keys(rows[0])
 
@@ -48,7 +88,7 @@ export function Component() {
                 await fileHandle.write(new TextEncoder().encode(cols.join(";")))
 
                 for await (const row of rows) {
-                    await fileHandle.write(new TextEncoder().encode("\n"+Object.values(row).join(";")))
+                    await fileHandle.write(new TextEncoder().encode("\n" + Object.values(row).join(";")))
                     setMessage(`Salvando ${rows.indexOf(row)} de ${rows.length}`)
                 }
 
@@ -82,6 +122,8 @@ export function Component() {
     })
 
     const columns = useMemo(() => {
+
+        const result = queryResult.data?.result || []
         if (result.length == 0) return []
 
 
@@ -97,35 +139,26 @@ export function Component() {
         })
 
         return cols
-    }, [result])
+    }, [queryResult.data])
 
-    const execute = useCallback(async () => {
-        try {
-
-            const queryWrap = `select * from (${sql}) limit 50`
-            const query = await db.select<any[]>(queryWrap)
-
-            const sqlCount = `select count(*) as c from (${sql})`
-
-            const queryCount = await db.select(sqlCount)
-
-            const count = _.get(queryCount, '0.c')
-
-            setMessage(`${count} linhas`)
-            setResult(query.map((q, i) => ({ '#': i + 1, ...q })))
-        } catch (e) {
-            setResult([])
-            setMessage(String(e))
-        }
-
-    }, [sql])
 
     function setTable(table: string) {
-        setSql(`select * from ${table}`);
-        execute()
+        editorRef.current?.setValue(`select * from ${table}`)
+        queryResult.refetch()
     }
 
 
+    const onMountEditor: OnMount = editor => {
+        editorRef.current = editor
+
+        editor.updateOptions({
+            fontSize: 16
+        })
+    }
+
+    useEffect(() => {
+        queryResult.refetch()
+    }, [page])
 
     return <div className='h-[calc(100vh-3.5rem)] overflow-hidden flex flex-col relative'>
         <ResizablePanelGroup orientation='horizontal'>
@@ -172,22 +205,35 @@ export function Component() {
                 <ResizablePanelGroup orientation='vertical'>
                     <ResizablePanel defaultSize={'50%'} className='relative'>
                         <div className='absolute top-0 right-0 left-0 bottom-10'>
-                            <Editor language='sql' height={'100%'} value={sql} onChange={v => setSql(v!)} />
+                            <Editor onMount={onMountEditor} language='sql' height={'100%'}  />
                         </div>
                         <div className='absolute right-0 border-t left-0 h-10 bottom-0 flex justify-end items-center px-2'>
-                            <Button onClick={execute} variant={'outline'}>Executar</Button>
+                            <Button onClick={() => queryResult.refetch()} variant={'outline'}>
+                                {queryResult.isFetching && (<Spinner />)}
+                                Executar</Button>
                         </div>
                     </ResizablePanel>
                     <ResizableHandle withHandle />
                     <ResizablePanel defaultSize={'50%'} className='relative'>
                         <div className='absolute top-0 right-0 left-0 bottom-0'>
-                            <Grid columnDefs={columns} autoGenerateColumnDefs={false} rowData={result} />
+                            <Grid columnDefs={columns} autoGenerateColumnDefs={false} rowData={queryResult.data?.result || []} />
                         </div>
                         <div className='absolute border-t px-4 right-0 left-0 h-12 border bottom-0 flex items-center'>
-                            <span className='text-sm  flex-1'>
+                            <span className='text-sm'>
 
                                 {message}
                             </span>
+                            <div className='flex mx-auto'>
+                                <Button variant={'ghost'} onClick={() => setPage(p => Math.max(1, p - 1))}>
+                                    <ChevronLeft />
+                                </Button>
+                                <div className='w-20'>
+                                    <Input value={page} onChange={t => setPage(parseInt(t.target.value))} className='text-center' />
+                                </div>
+                                <Button variant={'ghost'} onClick={() => setPage(p => p + 1)}>
+                                    <ChevronRight />
+                                </Button>
+                            </div>
                             <Button onClick={() => selectFileExport()} variant={'outline'}>
                                 {mutationExportCSV.isPending && (
                                     <Spinner />
