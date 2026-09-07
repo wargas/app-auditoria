@@ -14,11 +14,9 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <TooltipProvider>
       <QueryClientProvider client={queryClient}>
-        <div className="h-screen">
           <AppProvider>
             <RouterProvider router={routes} />
           </AppProvider>
-        </div>
       </QueryClientProvider>
     </TooltipProvider>
   </React.StrictMode>,

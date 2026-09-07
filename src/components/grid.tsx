@@ -16,6 +16,7 @@ export const myTheme = themeQuartz
         // fontFamily: {
         //     googleFont: "Inter"
         // },
+        headerVerticalPaddingScale: 0.6,
         headerRowBorder: true,
         rowBorder: true,
         wrapperBorder: false,

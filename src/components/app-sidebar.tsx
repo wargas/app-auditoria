@@ -1,11 +1,11 @@
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "#components/ui/sidebar"
-import { ChartArea, FileText, HomeIcon, LogOut, Upload } from "lucide-react"
+import { ChartArea, Code2, FileText, HomeIcon, LogOut, Upload } from "lucide-react"
 import { Link } from "react-router"
 import { useApp } from "../app-context"
 
 export function AppSidebar() {
     const app = useApp()
-    return <Sidebar variant="floating" collapsible="icon">
+    return <Sidebar variant="sidebar" collapsible="icon">
         <SidebarContent>
             <SidebarGroup>
                 <SidebarGroupLabel>MENU</SidebarGroupLabel>
@@ -48,6 +48,15 @@ export function AppSidebar() {
                                 <Link to={`/relatorios`}>
                                     <FileText />
                                     Relatorios
+                                </Link>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+
+                        <SidebarMenuItem>
+                            <SidebarMenuButton asChild>
+                                <Link to={`/consultas`}>
+                                    <Code2 />
+                                    Consultas
                                 </Link>
                             </SidebarMenuButton>
                         </SidebarMenuItem>

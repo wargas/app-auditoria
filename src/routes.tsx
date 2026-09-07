@@ -31,6 +31,10 @@ export const routes = createHashRouter([
             {
                 path: 'relatorios',
                 lazy: () => import('./routes/relatorios.router')
+            },
+            {
+                path: '/consultas',
+                lazy: () => import('./routes/consultas.router')
             }
         ]
     },

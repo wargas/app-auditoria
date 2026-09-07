@@ -6,15 +6,13 @@ import { Outlet } from "react-router"
 export function Component() {
     
 
-    return <div>
-        <SidebarProvider>
+    return  <SidebarProvider>
             <AppSidebar />
             <main className="w-full h-screen overflow-hidden">
-                <div className="h-12 flex items-center px-4">
+                <div className="h-12 flex border-b items-center px-4">
                     <SidebarTrigger />
                 </div>
                 <Outlet />
             </main>
         </SidebarProvider>
-    </div>
 }
