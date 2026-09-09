@@ -1,7 +1,7 @@
 import { Grid } from '#components/grid';
 import { Button } from '#components/ui/button';
 import Editor, { Monaco, OnMount, useMonaco } from '@monaco-editor/react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useApp } from '../app-context';
 import _, { filter, uniqBy } from 'lodash'
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '#components/ui/resizable';
@@ -255,7 +255,7 @@ export function Component() {
                     const line = model.getLineContent(position.lineNumber).substring(0, word.endColumn);
 
                     const tableName = _.last(line.trim().split(' '))?.replace(/.$/, "")
-                    console.log({ tableName, line })
+                    
 
                     if (!tableName) return { suggestions: [] }
 
@@ -289,6 +289,39 @@ export function Component() {
 
 
 
+    const handleClickColumn = useCallback((table: string, col: string) => {
+        if(!editorRef.current) return;
+
+        const position = editorRef.current.getPosition()
+
+        if(!position) return;
+
+        const code = editorRef.current.getValue()
+
+        const keyword = ` ${table}.${col} `
+
+        let column = 0
+
+        const newCode = code.split('\n').map((line, n) => {
+
+            if(position.lineNumber == n+1) {
+                const start = line.substring(0, position.column).trimEnd()+keyword
+
+                
+                column = start.length;
+                return start+line.substring(position.column).trimStart()
+            }
+
+            return line
+        })
+
+        editorRef.current.setValue(newCode.join('\n'))
+        editorRef.current.setPosition({column, lineNumber: position.lineNumber})
+
+        editorRef.current.focus()
+
+    }, [editorRef.current])
+
     return <SidebarProvider>
         <Sidebar>
             <SidebarContent>
@@ -320,7 +353,7 @@ export function Component() {
                                         <SidebarMenuSub>
                                             {item.columns.filter(col => String(col.column_name).toLocaleLowerCase().includes(searchTable.toLocaleLowerCase())).map(col => (
                                                 <SidebarMenuSubItem key={col.cid}>
-                                                    <SidebarMenuSubButton>
+                                                    <SidebarMenuSubButton onClick={() => handleClickColumn(item.name, col.column_name)}>
                                                         {col.column_name}
                                                         <SidebarMenuAction className='text-xs text-gray-400'>{col.type}</SidebarMenuAction>
                                                     </SidebarMenuSubButton>
@@ -341,7 +374,7 @@ export function Component() {
                 <ResizablePanel defaultSize={'50%'} className='relative'>
                     <div className='absolute top-0 right-0 left-0 bottom-10'>
                         <Editor
-                            options={{ automaticLayout: true }}
+                            options={{ automaticLayout: true, minimap: { enabled: false } }}
                             onChange={handleChangeEditor}
                             onMount={onMountEditor}
                             language='sql'
