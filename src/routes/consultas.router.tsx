@@ -1,12 +1,12 @@
 import { Grid } from '#components/grid';
 import { Button } from '#components/ui/button';
-import Editor, { OnMount } from '@monaco-editor/react';
-import { useMemo, useRef, useState } from 'react';
+import Editor, { Monaco, OnMount, useMonaco } from '@monaco-editor/react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useApp } from '../app-context';
 import _, { filter, uniqBy } from 'lodash'
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '#components/ui/resizable';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { Sidebar, SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuAction, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem, SidebarProvider } from '#components/ui/sidebar';
+import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuAction, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem, SidebarProvider } from '#components/ui/sidebar';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '#components/ui/collapsible';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Spinner } from '#components/ui/spinner';
@@ -16,12 +16,19 @@ import { Input } from '#components/ui/input';
 import { editor, KeyMod, KeyCode } from 'monaco-editor';
 import { Store } from '@tauri-apps/plugin-store';
 import { readText } from '@tauri-apps/plugin-clipboard-manager'
+import { parse, show } from 'sql-parser-cst'
+
+
 
 export function Component() {
     const app = useApp()
     const db = app.db!
     const [message, setMessage] = useState('')
     const [page, setPage] = useState(1)
+
+    const monaco = useMonaco()
+
+    const [searchTable, setSearchTable] = useState('')
 
     const editorRef = useRef<editor.IStandaloneCodeEditor>(null)
 
@@ -31,29 +38,43 @@ export function Component() {
             try {
 
                 const timeStart = new Date().getTime()
-                const sql = editorRef.current?.getValue() || ""
+                const sqlText = editorRef.current?.getValue() || ""
 
+                const cst = parse(sqlText, {
+                    dialect: 'sqlite',
+                    includeComments: false,
+                    includeSpaces: true,
+                    includeNewlines: true
+                })
+
+                const executeStmts = cst.statements.filter(c => c.type != 'select_stmt' && c.type != 'empty')
+
+                for await (const stmt of executeStmts) {
+                    const sql = show(stmt).trim();
+
+                    const queryExecute = await db.execute(sql);
+
+                    setMessage(`${queryExecute.rowsAffected} linhas afetas`)
+
+                }
+
+                queryTables.refetch()
+
+                const selectStmt = cst.statements.find(c => c.type == 'select_stmt')
+
+
+                if (!selectStmt) return { result: [], count: 0 }
+
+                const select = show(selectStmt).trim()
 
                 const limit = 100;
                 const offset = (page - 1) * limit
 
-                if (!sql.toLocaleLowerCase().startsWith('select ')) {
-                    const queryExecute = await db.execute(sql);
+                const queryWrap = `select * from (${select})  limit ${offset}, ${limit}`
 
-                    await queryTables.refetch()
-
-                    setMessage(`${queryExecute.rowsAffected} linhas afetas`)
-
-                    return { result: [], count: 0 }
-                }
-
-
-                const queryWrap = `select * from (${sql})  limit ${offset}, ${limit}`
                 const query = await db.select<any[]>(queryWrap)
 
-                console.log(query)
-
-                const sqlCount = `select count(*) as c from (${sql})`
+                const sqlCount = `select count(*) as c from (${select})`
 
                 const queryCount = await db.select(sqlCount)
 
@@ -128,6 +149,7 @@ export function Component() {
                 from sqlite_schema m
                 join pragma_table_info(m.name) p`)
 
+
             return uniqBy(query, 'table_name').map(item => {
                 return {
                     name: item.table_name,
@@ -164,7 +186,7 @@ export function Component() {
     }
 
 
-    const onMountEditor: OnMount = editor => {
+    const onMountEditor: OnMount = (editor, _monaco: Monaco) => {
         editorRef.current = editor
 
         editor.updateOptions({
@@ -183,7 +205,10 @@ export function Component() {
 
 
             }
-        })
+        });
+
+
+
     }
 
     async function handleChangeEditor(value: string | undefined, _ev: editor.IModelContentChangedEvent) {
@@ -192,54 +217,135 @@ export function Component() {
         await store.set('code', value)
     }
 
-    
+    useEffect(() => {
+        if (monaco) {
+            monaco.languages.registerCompletionItemProvider('sql', {
+                provideCompletionItems(model, position, _context, _token) {
+
+                    const word = model.getWordUntilPosition(position)
+
+                    const suggestionsTables = queryTables.data?.map(t => {
+                        return {
+                            label: t.name!,
+                            kind: monaco.languages.CompletionItemKind.Keyword,
+                            insertText: t.name!,
+                            documentation: `table ${t.name}`,
+                            range: {
+                                startLineNumber: position.lineNumber,
+                                endLineNumber: position.lineNumber,
+                                startColumn: word.startColumn,
+                                endColumn: word.endColumn
+                            }
+                        }
+                    }) || []
+
+
+                    return { suggestions: suggestionsTables };
+                },
+
+
+            });
+
+            monaco.languages.registerCompletionItemProvider('sql', {
+                triggerCharacters: ['.'],
+                provideCompletionItems(model, position, _context, _token) {
+
+                    const word = model.getWordUntilPosition(position)
+
+                    const line = model.getLineContent(position.lineNumber).substring(0, word.endColumn);
+
+                    const tableName = _.last(line.trim().split(' '))?.replace(/.$/, "")
+                    console.log({ tableName, line })
+
+                    if (!tableName) return { suggestions: [] }
+
+
+                    const suggestionsTables = queryTables.data?.filter(t => String(t.name).toLocaleLowerCase() == tableName.toLocaleLowerCase()).flatMap(t => {
+                        return t.columns.map(c => {
+
+                            return {
+                                label: c.column_name!,
+                                kind: monaco.languages.CompletionItemKind.Keyword,
+                                insertText: String(c.column_name),
+                                documentation: `table ${c.column_name}`,
+                                range: {
+                                    startLineNumber: position.lineNumber,
+                                    endLineNumber: position.lineNumber,
+                                    startColumn: word.startColumn,
+                                    endColumn: word.endColumn
+                                }
+                            }
+                        })
+                    }) || []
+
+
+                    return { suggestions: suggestionsTables };
+                },
+
+
+            });
+        }
+    }, [monaco, queryTables.data])
+
+
 
     return <SidebarProvider>
         <Sidebar>
-            <SidebarGroup>
-                <SidebarGroupLabel>Tabelas</SidebarGroupLabel>
+            <SidebarContent>
 
-                <SidebarMenu>
-                    {queryTables.data?.map(item => (
-                        <Collapsible asChild key={item.name}>
-                            <SidebarMenuItem >
-                                <SidebarMenuButton
-                                // 
-                                >
-                                    <CollapsibleTrigger asChild>
-                                        <Button variant={'ghost'} size={'icon'}>
-                                            <ChevronRight />
-                                        </Button>
-                                    </CollapsibleTrigger>
-                                    <span className='w-full' onClick={() => setTable(item.name)}>
+                <SidebarGroup>
+                    <SidebarGroupLabel>Tabelas</SidebarGroupLabel>
 
-                                        {item.name}
-                                    </span>
-                                </SidebarMenuButton>
-                                <CollapsibleContent asChild>
-                                    <SidebarMenuSub>
-                                        {item.columns.map(col => (
-                                            <SidebarMenuSubItem key={col.cid}>
-                                                <SidebarMenuSubButton>
-                                                    {col.column_name}
-                                                    <SidebarMenuAction className='text-xs text-gray-400'>{col.type}</SidebarMenuAction>
-                                                </SidebarMenuSubButton>
-                                            </SidebarMenuSubItem>
-                                        ))}
-                                    </SidebarMenuSub>
-                                </CollapsibleContent>
-                            </SidebarMenuItem>
-                        </Collapsible>
-                    ))}
-                </SidebarMenu>
-               
-            </SidebarGroup>
+                    <SidebarMenu>
+                        <SidebarMenuItem>
+                            <Input value={searchTable} onChange={e => setSearchTable(e.target.value)} />
+                        </SidebarMenuItem>
+                        {queryTables.data?.map(item => (
+                            <Collapsible asChild key={item.name} className='data-open:bg-muted group'>
+                                <SidebarMenuItem >
+                                    <SidebarMenuButton
+                                    // 
+                                    >
+                                        <CollapsibleTrigger asChild>
+                                            <Button variant={'ghost'} size={'icon'}>
+                                                <ChevronRight className='group-data-open:rotate-90' />
+                                            </Button>
+                                        </CollapsibleTrigger>
+                                        <span className='w-full' onClick={() => setTable(item.name)}>
+
+                                            {item.name}
+                                        </span>
+                                    </SidebarMenuButton>
+                                    <CollapsibleContent asChild>
+                                        <SidebarMenuSub>
+                                            {item.columns.filter(col => String(col.column_name).toLocaleLowerCase().includes(searchTable.toLocaleLowerCase())).map(col => (
+                                                <SidebarMenuSubItem key={col.cid}>
+                                                    <SidebarMenuSubButton>
+                                                        {col.column_name}
+                                                        <SidebarMenuAction className='text-xs text-gray-400'>{col.type}</SidebarMenuAction>
+                                                    </SidebarMenuSubButton>
+                                                </SidebarMenuSubItem>
+                                            ))}
+                                        </SidebarMenuSub>
+                                    </CollapsibleContent>
+                                </SidebarMenuItem>
+                            </Collapsible>
+                        ))}
+                    </SidebarMenu>
+
+                </SidebarGroup>
+            </SidebarContent>
         </Sidebar>
         <div className='h-screen overflow-hidden flex flex-col relative w-full'>
             <ResizablePanelGroup orientation='vertical'>
                 <ResizablePanel defaultSize={'50%'} className='relative'>
                     <div className='absolute top-0 right-0 left-0 bottom-10'>
-                        <Editor onChange={handleChangeEditor} onMount={onMountEditor} language='sql' height={'100%'} />
+                        <Editor
+                            options={{ automaticLayout: true }}
+                            onChange={handleChangeEditor}
+                            onMount={onMountEditor}
+                            language='sql'
+                            height={`100%`} />
                     </div>
                     <div className='absolute right-0 border-t left-0 h-10 bottom-0 flex justify-end items-center px-2'>
                         <Button onClick={() => queryResult.refetch()} variant={'outline'}>
@@ -250,7 +356,7 @@ export function Component() {
                 <ResizableHandle withHandle />
                 <ResizablePanel defaultSize={'50%'} className='relative'>
                     <div className='absolute top-0 right-0 left-0 bottom-0'>
-                        <Grid  
+                        <Grid
                             // onSortChanged={handleChangeSort} 
                             columnDefs={columns} autoGenerateColumnDefs={false} rowData={queryResult.data?.result || []} />
                     </div>
