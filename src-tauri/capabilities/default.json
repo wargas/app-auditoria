@@ -5,7 +5,8 @@
   "windows": [
     "main",
     "new-project",
-    "consultas-*"
+    "consultas-*",
+    "config"
   ],
   "permissions": [
     "core:default",

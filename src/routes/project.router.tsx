@@ -1,18 +1,25 @@
 import { AppSidebar } from "#components/app-sidebar"
-import { SidebarProvider, SidebarTrigger } from "#components/ui/sidebar"
+import { SidebarProvider } from "#components/ui/sidebar"
 import { Outlet } from "react-router"
 
 
 export function Component() {
-    
 
-    return  <SidebarProvider>
+
+    return <div>
+        
+
+
+        <SidebarProvider>
+
             <AppSidebar />
             <main className="w-full h-screen overflow-hidden">
-                <div className="h-12 flex border-b items-center px-4">
+                {/* <div className="h-12 flex border-b items-center px-4">
                     <SidebarTrigger />
-                </div>
+                </div> */}
                 <Outlet />
             </main>
         </SidebarProvider>
+
+    </div>
 }

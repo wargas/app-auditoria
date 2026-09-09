@@ -1,5 +1,5 @@
-import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "#components/ui/sidebar"
-import { ChartArea, Code2, FileText, HomeIcon, LogOut, Upload } from "lucide-react"
+import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarRail, SidebarSeparator } from "#components/ui/sidebar"
+import {  ChartArea, Code2, FileText, HomeIcon, LogOut, Settings, Upload } from "lucide-react"
 import { Link } from "react-router"
 import { useApp } from "../app-context"
 import { WebviewWindow } from "@tauri-apps/api/webviewWindow"
@@ -16,10 +16,12 @@ export function AppSidebar() {
 
     return <Sidebar variant="sidebar" collapsible="icon">
         <SidebarContent>
+            
             <SidebarGroup>
                 <SidebarGroupLabel>MENU</SidebarGroupLabel>
                 <SidebarGroupContent>
                     <SidebarMenu>
+
                         <SidebarMenuItem>
                             <SidebarMenuButton asChild>
                                 <Link to={`/`}>
@@ -69,6 +71,18 @@ export function AppSidebar() {
 
                             </SidebarMenuButton>
                         </SidebarMenuItem>
+                        <SidebarSeparator />
+                        <SidebarMenuItem>
+                            <SidebarMenuButton asChild>
+                                <Link to={`/settings`}>
+                                    <Settings />
+                                    Configurações
+                                </Link>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+
+                        
+
 
                     </SidebarMenu>
                 </SidebarGroupContent>
@@ -82,5 +96,6 @@ export function AppSidebar() {
                 </SidebarMenuItem>
             </SidebarMenu>
         </SidebarFooter>
+        <SidebarRail />
     </Sidebar>
 }

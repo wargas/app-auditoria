@@ -10,6 +10,7 @@ import { readFileStream } from "#lib/utils";
 import prettyBytes from 'pretty-bytes'
 import { parse as parseCSV } from "papaparse";
 import { useApp } from "../app-context";
+import { getConfig } from "#lib/config";
 
 export function UploadNFCE() {
 
@@ -66,7 +67,11 @@ export function UploadNFCE() {
 
             updateProgress(0)
 
-            for await (const { lines, size, fileBytesRead } of readFileStream(file, 1024 * 5)) {
+            const config = await getConfig()
+            
+            console.log({config})
+
+            for await (const { lines, size, fileBytesRead } of readFileStream(file, 1024 * config.buffer_size)) {
 
                 const values = lines
                     .filter(l => !l.trim().startsWith('Nota;'))
