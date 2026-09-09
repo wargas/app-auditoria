@@ -36,7 +36,7 @@ export function Grid(props: AgGridReactProps) {
     return <div ref={ref} className='h-full'>
         <AgGridProvider modules={modules}>            
             <div style={{ height: (height!) - 50 }}>
-                <AgGridReact theme={myTheme} {...props} />
+                <AgGridReact gridOptions={{enableCellTextSelection: true}} theme={myTheme} {...props} />
             </div>
         </AgGridProvider>
     </div>

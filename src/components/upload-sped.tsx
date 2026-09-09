@@ -19,8 +19,6 @@ export function UploadSped() {
     const [progress, setProgress] = useState(0)
     const [message, setMessage] = useState('')
 
-
-
     const mutation = useMutation({
         mutationFn: processarSped,
         onError: () => {
@@ -154,7 +152,7 @@ export function UploadSped() {
             from sped_temp where registro = 'E110'    
         `)
 
-        // await db.execute(`drop table if exists sped_temp`)
+        await db.execute('drop table if exists sped_temp');
 
         setMessage(`Concluido`)
 

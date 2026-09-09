@@ -2,9 +2,18 @@ import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupConte
 import { ChartArea, Code2, FileText, HomeIcon, LogOut, Upload } from "lucide-react"
 import { Link } from "react-router"
 import { useApp } from "../app-context"
+import { WebviewWindow } from "@tauri-apps/api/webviewWindow"
 
 export function AppSidebar() {
     const app = useApp()
+
+    async function openConsultas() {
+        new WebviewWindow(`consultas-${new Date().getTime()}`, {
+            devtools: true,
+            url: '#/consultas'
+        })
+    }
+
     return <Sidebar variant="sidebar" collapsible="icon">
         <SidebarContent>
             <SidebarGroup>
@@ -53,19 +62,19 @@ export function AppSidebar() {
                         </SidebarMenuItem>
 
                         <SidebarMenuItem>
-                            <SidebarMenuButton asChild>
-                                <Link to={`/consultas`}>
-                                    <Code2 />
-                                    Consultas
-                                </Link>
+                            <SidebarMenuButton onClick={openConsultas}>
+
+                                <Code2 />
+                                Consultas
+
                             </SidebarMenuButton>
                         </SidebarMenuItem>
-                        
+
                     </SidebarMenu>
                 </SidebarGroupContent>
             </SidebarGroup>
         </SidebarContent>
-            
+
         <SidebarFooter>
             <SidebarMenu>
                 <SidebarMenuItem>

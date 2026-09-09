@@ -5,7 +5,7 @@
   "windows": [
     "main",
     "new-project",
-    "project"
+    "consultas-*"
   ],
   "permissions": [
     "core:default",
@@ -75,6 +75,9 @@
     "fs:allow-video-write-recursive",
     "fs:write-all",
     "fs:write-files",
-    "log:default"
+    "log:default",
+    "clipboard-manager:default",
+    "clipboard-manager:allow-read-text",
+    "clipboard-manager:allow-write-text"
   ]
 }

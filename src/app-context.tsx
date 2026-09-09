@@ -1,4 +1,6 @@
 import { Button } from "#components/ui/button";
+import { Spinner } from "#components/ui/spinner";
+import { initDb } from "#lib/database";
 import { getProject, setProject } from "#lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { getCurrentWindow } from "@tauri-apps/api/window";
@@ -23,8 +25,6 @@ export function AppProvider({ children }: ComponentProps<"div">) {
             win.setTitle('auditoria')
 
             if (!path) return null;
-
-
 
             win.setTitle(path.replace(/^sqlite\:/, ""))
 
@@ -56,12 +56,7 @@ export function AppProvider({ children }: ComponentProps<"div">) {
 
             const db = await Database.load(pathDb)
 
-            await db.execute(`create table if not exists sped_df (id text primary key, periodo text, chave text, modelo varchar(2), tipo_emitente varchar(1), tipo_operacao varchar(1), valor_icms float, line text)`)
-            await db.execute(`create table if not exists apuracao (periodo varchar(10),  vl_tot_debitos float,  vl_aj_debitos float,  vl_tot_aj_debitos float,  vl_estornos_cred float,  vl_tot_creditos float,  vl_aj_creditos float,  vl_tot_aj_creditos float,  vl_estornos_deb float,  vl_sld_credor_ant float,  vl_sld_apurado float,  vl_tot_ded float,  vl_icms_recolher float,  vl_sld_credor_transportar float,  deb_esp float)`)
-            await db.execute(`create table if not exists ajuste_creditos (periodo text, codigo text, descricao text, valor float, line text)`)
-            await db.execute(`create table if not exists nfce (id text primary key, chave text, valor_icms float, line text)`)
-            await db.execute(`create table if not exists nfe (id text primary key, chave text, emitente text, destinatario text, tipo_operacao text, valor_icms float, line text)`)
-            await db.execute(`create table if not exists cadastro (cnpj text primary key, nome text, ie text)`)
+            await initDb(db)
 
             await setProject(pathDb)
 
@@ -84,10 +79,19 @@ export function AppProvider({ children }: ComponentProps<"div">) {
 
 
         await setProject(`sqlite:${path}`)
+
+
         query.refetch()
     }
 
     return <AppContext.Provider value={{ db: query.data, sair: sairProjeto }}>
+
+        {query.isFetching && (
+            <div className="flex h-screen justify-center items-center gap-4">
+                <Spinner />
+            </div>
+        )}
+
         {query.data == null ? (
             <div className="flex h-screen justify-center items-center gap-4">
                 <Button onClick={abrirProjeto} variant={`outline`}>Abrir Projeto</Button>

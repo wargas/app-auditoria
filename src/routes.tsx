@@ -10,32 +10,39 @@ export const routes = createHashRouter([
     // },
     {
         path: '/',
-        lazy: () => import('./routes/project.router'),
+        lazy: () => import('./routes/app-layout'),
         children: [
             {
-                path: '',
-                lazy: () => import('./routes/project-home')
-            },
-            {
-                path: 'arquivos',
-                lazy: () => import('./routes/upload-arquivos.router')
-            },
-            {
-                path: 'apuracao',
-                lazy: () => import('./routes/apuracao.router')
-            },
-            {
-                path: 'outros-creditos',
-                lazy: () => import('./routes/outros-creditos.router')
-            },
-            {
-                path: 'relatorios',
-                lazy: () => import('./routes/relatorios.router')
+                path: '/',
+                lazy: () => import('./routes/project.router'),
+                children: [
+                    {
+                        path: '',
+                        lazy: () => import('./routes/project-home')
+                    },
+                    {
+                        path: 'arquivos',
+                        lazy: () => import('./routes/upload-arquivos.router')
+                    },
+                    {
+                        path: 'apuracao',
+                        lazy: () => import('./routes/apuracao.router')
+                    },
+                    {
+                        path: 'outros-creditos',
+                        lazy: () => import('./routes/outros-creditos.router')
+                    },
+                    {
+                        path: 'relatorios',
+                        lazy: () => import('./routes/relatorios.router')
+                    },
+                   
+                ]
             },
             {
                 path: '/consultas',
                 lazy: () => import('./routes/consultas.router')
             }
         ]
-    },
+    }
 ])
