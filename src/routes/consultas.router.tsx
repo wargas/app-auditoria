@@ -47,8 +47,11 @@ export function Component() {
                     return { result: [], count: 0 }
                 }
 
-                const queryWrap = `select * from (${sql}) limit ${offset}, ${limit}`
+
+                const queryWrap = `select * from (${sql})  limit ${offset}, ${limit}`
                 const query = await db.select<any[]>(queryWrap)
+
+                console.log(query)
 
                 const sqlCount = `select count(*) as c from (${sql})`
 
@@ -61,7 +64,7 @@ export function Component() {
                 setMessage(`${count} linhas em ${endTime - timeStart} ms`)
 
                 return {
-                    count, result: query
+                    count, result: query.map((q, i) => ({ '#': i + 1, ...q }))
                 }
                 // setResult(query.map((q, i) => ({ '#': i + 1, ...q })))
             } catch (e) {
@@ -145,7 +148,7 @@ export function Component() {
         }).map(c => {
 
             if (c.field == '#') {
-                return { ...c, width: 50 }
+                return { ...c, width: 100 }
             }
 
             return c
@@ -183,19 +186,19 @@ export function Component() {
         })
     }
 
-
-
     async function handleChangeEditor(value: string | undefined, _ev: editor.IModelContentChangedEvent) {
         const store = await Store.load('editor.json')
 
         await store.set('code', value)
     }
 
+    
+
     return <SidebarProvider>
         <Sidebar>
             <SidebarGroup>
                 <SidebarGroupLabel>Tabelas</SidebarGroupLabel>
-                
+
                 <SidebarMenu>
                     {queryTables.data?.map(item => (
                         <Collapsible asChild key={item.name}>
@@ -229,6 +232,7 @@ export function Component() {
                         </Collapsible>
                     ))}
                 </SidebarMenu>
+               
             </SidebarGroup>
         </Sidebar>
         <div className='h-screen overflow-hidden flex flex-col relative w-full'>
@@ -246,7 +250,9 @@ export function Component() {
                 <ResizableHandle withHandle />
                 <ResizablePanel defaultSize={'50%'} className='relative'>
                     <div className='absolute top-0 right-0 left-0 bottom-0'>
-                        <Grid columnDefs={columns} autoGenerateColumnDefs={false} rowData={queryResult.data?.result || []} />
+                        <Grid  
+                            // onSortChanged={handleChangeSort} 
+                            columnDefs={columns} autoGenerateColumnDefs={false} rowData={queryResult.data?.result || []} />
                     </div>
                     <div className='absolute border-t px-4 right-0 left-0 h-12 border bottom-0 flex items-center'>
                         <span className='text-sm'>
