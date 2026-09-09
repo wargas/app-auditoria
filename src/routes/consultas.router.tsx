@@ -199,13 +199,22 @@ export function Component() {
             keybindings: [KeyMod.CtrlCmd | KeyCode.KeyV],
             run: async (ed) => {
                 const text = await readText()
-                const selection = await ed.getSelection()!
+                const selection = ed.getSelection()!
 
                 ed.executeEdits('custom-paste', [{ range: selection, text, forceMoveMarkers: true }]);
 
 
             }
         });
+
+        editor.addAction({
+            id: 'run',
+            label: 'run',
+            keybindings: [KeyCode.F5],
+            run() {
+                queryResult.refetch()
+            }
+        })
 
 
 
@@ -259,8 +268,28 @@ export function Component() {
 
                     if (!tableName) return { suggestions: [] }
 
+                    const sqlText = model.getValue()
 
-                    const suggestionsTables = queryTables.data?.filter(t => String(t.name).toLocaleLowerCase() == tableName.toLocaleLowerCase()).flatMap(t => {
+                    const regexAlias = /\b(?:FROM|JOIN)\s+([a-zA-Z0-9_]+)(?:\s+(?:AS\s+)?([a-zA-Z0-9_]+))?/gi;
+
+                    const tableAlias: {name:string, alias: string}[] = []
+
+                    while(true) {
+                        const match = regexAlias.exec(sqlText);
+
+                        if(match == null) break;
+
+                        tableAlias.push({
+                            name: match[1],
+                            alias: match[2]
+                        })
+                    }
+
+                    
+                    const suggestionsTables = queryTables.data?.filter(t => 
+                        String(t.name).toLocaleLowerCase() == tableName.toLocaleLowerCase() ||
+                        tableAlias.find(a => a.alias == tableName)?.name == String(t.name)
+                    ).flatMap(t => {
                         return t.columns.map(c => {
 
                             return {
