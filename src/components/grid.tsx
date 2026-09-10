@@ -8,7 +8,7 @@ const modules = [AllCommunityModule];
 
 
 // to use myTheme in an application, pass it to the theme grid option
-export const myTheme = themeQuartz
+export const themeLight = themeQuartz
     .withParams({
         fontSize: 12,
         borderColor: "#95A0A66B",
@@ -24,6 +24,18 @@ export const myTheme = themeQuartz
         borderRadius: 0
     });
 
+export const themeDark = themeLight
+    .withParams({
+        backgroundColor: "#202020",
+        browserColorScheme: "dark",
+        chromeBackgroundColor: {
+            ref: "foregroundColor",
+            mix: 0.07,
+            onto: "backgroundColor"
+        },
+        foregroundColor: "#FFF"
+    });
+
 export function Grid(props: AgGridReactProps) {
     const ref = useRef<HTMLDivElement>(null!)
 
@@ -34,9 +46,9 @@ export function Grid(props: AgGridReactProps) {
 
 
     return <div ref={ref} className='h-full'>
-        <AgGridProvider modules={modules}>            
+        <AgGridProvider modules={modules}>
             <div style={{ height: (height!) - 50 }}>
-                <AgGridReact gridOptions={{enableCellTextSelection: true}} theme={myTheme} {...props} />
+                <AgGridReact gridOptions={{ enableCellTextSelection: true }} theme={localStorage.getItem('vite-ui-theme') == "dark" ? themeDark : themeLight} {...props} />
             </div>
         </AgGridProvider>
     </div>

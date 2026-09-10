@@ -1,3 +1,4 @@
+import { useTheme } from "#components/theme-provider";
 import { Input } from "#components/ui/input";
 import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemSeparator, ItemTitle } from "#components/ui/item";
 import { Spinner } from "#components/ui/spinner";
@@ -7,6 +8,8 @@ import { useQuery } from "@tanstack/react-query";
 import { ChangeEvent } from "react";
 
 export function Component() {
+
+    const theme = useTheme()
 
     const queryConfig = useQuery({
         queryKey: ['config'],
@@ -45,7 +48,7 @@ export function Component() {
                     <ItemDescription>Exibir tema escuro</ItemDescription>
                 </ItemContent>
                 <ItemActions>
-                    <Switch />
+                    <Switch checked={theme.theme == "dark"} onCheckedChange={c => theme.setTheme(c ? "dark" : "light")} />
                 </ItemActions>
             </Item>
             <ItemSeparator />

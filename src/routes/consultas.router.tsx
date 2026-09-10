@@ -264,7 +264,7 @@ export function Component() {
                     const line = model.getLineContent(position.lineNumber).substring(0, word.endColumn);
 
                     const tableName = _.last(line.trim().split(' '))?.replace(/.$/, "")
-                    
+
 
                     if (!tableName) return { suggestions: [] }
 
@@ -272,12 +272,12 @@ export function Component() {
 
                     const regexAlias = /\b(?:FROM|JOIN)\s+([a-zA-Z0-9_]+)(?:\s+(?:AS\s+)?([a-zA-Z0-9_]+))?/gi;
 
-                    const tableAlias: {name:string, alias: string}[] = []
+                    const tableAlias: { name: string, alias: string }[] = []
 
-                    while(true) {
+                    while (true) {
                         const match = regexAlias.exec(sqlText);
 
-                        if(match == null) break;
+                        if (match == null) break;
 
                         tableAlias.push({
                             name: match[1],
@@ -285,8 +285,8 @@ export function Component() {
                         })
                     }
 
-                    
-                    const suggestionsTables = queryTables.data?.filter(t => 
+
+                    const suggestionsTables = queryTables.data?.filter(t =>
                         String(t.name).toLocaleLowerCase() == tableName.toLocaleLowerCase() ||
                         tableAlias.find(a => a.alias == tableName)?.name == String(t.name)
                     ).flatMap(t => {
@@ -319,11 +319,11 @@ export function Component() {
 
 
     const handleClickColumn = useCallback((table: string, col: string) => {
-        if(!editorRef.current) return;
+        if (!editorRef.current) return;
 
         const position = editorRef.current.getPosition()
 
-        if(!position) return;
+        if (!position) return;
 
         const code = editorRef.current.getValue()
 
@@ -333,19 +333,19 @@ export function Component() {
 
         const newCode = code.split('\n').map((line, n) => {
 
-            if(position.lineNumber == n+1) {
-                const start = line.substring(0, position.column).trimEnd()+keyword
+            if (position.lineNumber == n + 1) {
+                const start = line.substring(0, position.column).trimEnd() + keyword
 
-                
+
                 column = start.length;
-                return start+line.substring(position.column).trimStart()
+                return start + line.substring(position.column).trimStart()
             }
 
             return line
         })
 
         editorRef.current.setValue(newCode.join('\n'))
-        editorRef.current.setPosition({column, lineNumber: position.lineNumber})
+        editorRef.current.setPosition({ column, lineNumber: position.lineNumber })
 
         editorRef.current.focus()
 
@@ -407,12 +407,16 @@ export function Component() {
                             onChange={handleChangeEditor}
                             onMount={onMountEditor}
                             language='sql'
+                            theme={localStorage.getItem(`vite-ui-theme`) == "dark" ? "vs-dark" : "light"}
                             height={`100%`} />
                     </div>
                     <div className='absolute right-0 border-t left-0 h-10 bottom-0 flex justify-end items-center px-2'>
+                        
                         <Button onClick={() => queryResult.refetch()} variant={'outline'}>
                             {queryResult.isFetching && (<Spinner />)}
-                            Executar</Button>
+                           
+                            Executar
+                        </Button>
                     </div>
                 </ResizablePanel>
                 <ResizableHandle withHandle />

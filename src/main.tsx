@@ -7,6 +7,7 @@ import { QueryClientProvider, QueryClient } from '@tanstack/react-query'
 import { routes } from "./routes";
 import "./App.css";
 import { AppProvider } from "./app-context";
+import { ThemeProvider } from "#components/theme-provider";
 // import { warn, debug, trace, info, error } from '@tauri-apps/plugin-log';
 
 const queryClient = new QueryClient()
@@ -33,9 +34,11 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <TooltipProvider>
       <QueryClientProvider client={queryClient}>
+        <ThemeProvider>
           <AppProvider>
             <RouterProvider router={routes} />
           </AppProvider>
+        </ThemeProvider>
       </QueryClientProvider>
     </TooltipProvider>
   </React.StrictMode>,
