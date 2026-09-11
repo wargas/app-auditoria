@@ -1,34 +1,40 @@
 import { Grid } from '#components/grid';
 import { Button } from '#components/ui/button';
-import { useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useApp } from '../app-context';
 import _, { filter, uniqBy } from 'lodash'
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '#components/ui/resizable';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { SidebarProvider,  } from '#components/ui/sidebar';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { SidebarProvider, } from '#components/ui/sidebar';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Spinner } from '#components/ui/spinner';
 import { save } from '@tauri-apps/plugin-dialog';
 import { create } from '@tauri-apps/plugin-fs';
 import { Input } from '#components/ui/input';
-import { editor } from 'monaco-editor';
 import { Store } from '@tauri-apps/plugin-store';
 import { parse, show } from 'sql-parser-cst'
 import { EditorSql } from '#components/editor-sql';
 import { SidebarTables } from '#components/sidebar-tables';
+
+import { openPath } from '@tauri-apps/plugin-opener'
+import { ColDef } from 'ag-grid-community';
+import { DialogSaveSQL } from '#components/dialog-save-sql';
 
 export function Component() {
     const app = useApp()
     const db = app.db!
     const [message, setMessage] = useState('')
     const [page, setPage] = useState(1);
+    const [preSql, setPreSql] = useState('');
     const [sql, setSQL] = useState('')
-    
-    const editorRef = useRef<editor.IStandaloneCodeEditor>(null)
+    const [error, setError] = useState('')
+    const queryClient = useQueryClient()
 
     const queryResult = useQuery({
-        queryKey: ['query-result', page],
+        queryKey: ['query-result', sql, page],
         queryFn: async () => {
+            console.log(`update`)
+            setError('')
             try {
 
                 const timeStart = new Date().getTime()
@@ -61,10 +67,20 @@ export function Component() {
 
                 const select = show(selectStmt).trim()
 
+                const story = await Store.load(`history.json`)
+
+                const history = await story.get<string[]>(`queries`) ?? []
+
+                await story.set(`queries`, [sql, ...history.filter((_, i) => i < 20)])
+
+                await queryClient.refetchQueries({ queryKey: ['sql-history'] })
+
                 const limit = 100;
                 const offset = (page - 1) * limit
 
-                const queryWrap = `select * from (${select})  limit ${offset}, ${limit}`
+                const queryWrap = `select * from (${select}) limit ${offset}, ${limit}`
+
+                console.log({ queryWrap })
 
                 const query = await db.select<any[]>(queryWrap)
 
@@ -79,15 +95,15 @@ export function Component() {
                 setMessage(`${count} linhas em ${endTime - timeStart} ms`)
 
                 return {
-                    count, result: query.map((q, i) => ({ '#': i + 1, ...q }))
+                    count, result: query.map((q, i) => ({ '#': i + offset + 1, ...q }))
                 }
                 // setResult(query.map((q, i) => ({ '#': i + 1, ...q })))
             } catch (e) {
-                setMessage(String(e))
+                console.log(e)
+                setError(String(e))
                 return { result: [], count: 0 }
             }
-        },
-        enabled: !!editorRef.current?.getValue()
+        }
     })
 
     async function selectFileExport() {
@@ -101,13 +117,13 @@ export function Component() {
 
         if (!res) return;
 
-       await mutationExportCSV.mutateAsync(res)
+        await mutationExportCSV.mutateAsync(res)
     }
 
     const mutationExportCSV = useMutation({
         mutationFn: async (path: string) => {
             try {
-               
+
                 const rows = await db.select<any[]>(sql)
 
                 if (rows.length == 0) return;
@@ -119,13 +135,21 @@ export function Component() {
                 await fileHandle.write(new TextEncoder().encode(cols.join(";")))
 
                 for await (const row of rows) {
-                    await fileHandle.write(new TextEncoder().encode("\n" + Object.values(row).join(";")))
+                    const dataRow = Object.values(row).map(v => {
+                        if (String(v).match(/^\d{10,}$/)) return `="${v}"`;
+
+                        return v
+                    })
+                    await fileHandle.write(new TextEncoder().encode("\n" + dataRow.join(";")))
                     setMessage(`Salvando ${rows.indexOf(row)} de ${rows.length}`)
                 }
 
                 setMessage(`Arquivo salvo com sucesso`)
 
                 await fileHandle.close()
+
+                await openPath(path)
+
             } catch (error) {
                 console.log(error)
             }
@@ -137,6 +161,8 @@ export function Component() {
         queryFn: async () => {
             const query = await db.select<any[]>(`select 
                 m.name as table_name,
+                m.type as table_type,
+                m.sql,
                 p.name as column_name,
                 p.type,
                 p.cid
@@ -147,6 +173,8 @@ export function Component() {
             return uniqBy(query, 'table_name').map(item => {
                 return {
                     name: item.table_name,
+                    type: item.table_type,
+                    sql: item.sql,
                     columns: filter(query, { table_name: item.table_name })
                 }
             })
@@ -164,41 +192,70 @@ export function Component() {
         }).map(c => {
 
             if (c.field == '#') {
-                return { ...c, width: 100 }
+                return { ...c, width: 100, pinned: 'left' }
             }
 
             return c
         })
 
-        return cols
+        return cols as ColDef[]
     }, [queryResult.data])
 
 
     async function handleChangeEditor(value: string | undefined) {
         if (!value) return;
-        setSQL(value)
+        setPreSql(value)
         const store = await Store.load('editor.json')
 
         await store.set('code', value)
     }
-   
+
+
+    const handleChangeSQL = useCallback((newSql = '') => {
+
+        const _sql = newSql != `` ? newSql : preSql
+
+        setPreSql(_sql)
+
+        try {
+            const cst = parse(_sql, {
+                dialect: 'sqlite',
+                includeComments: false,
+                includeSpaces: true,
+                includeNewlines: true
+            })
+            console.log({ cst, _sql })
+            setSQL(_sql)
+        } catch (error) {
+
+            setError(String(error))
+
+        }
+    }, [preSql, sql])
+
+
     return <SidebarProvider>
 
-        <SidebarTables schema={queryTables.data ?? []} />
-       
+        <SidebarTables onChangeSQL={s => setPreSql(s)} schema={queryTables.data ?? []} />
+
         <div className='h-screen overflow-hidden flex flex-col relative w-full'>
             <ResizablePanelGroup orientation='vertical'>
                 <ResizablePanel defaultSize={'50%'} className='relative'>
                     <div className='absolute top-0 right-0 left-0 bottom-10'>
                         <EditorSql
-                            onF5={() => queryResult.refetch()}
+                            onF5={(s) => {
+                                console.log(s)
+                                setSQL(s)
+                            }}
+                            value={preSql}
                             schema={queryTables.data ?? []}
                             onChangeSQL={handleChangeEditor}
                         />
                     </div>
-                    <div className='absolute right-0 border-t left-0 h-10 bottom-0 flex justify-end items-center px-2'>
+                    <div className='absolute right-0 border-t left-0 h-10 bottom-0 flex gap-2 justify-end items-center px-2'>
+                        <DialogSaveSQL sql={preSql} />
 
-                        <Button onClick={() => queryResult.refetch()} variant={'outline'}>
+                        <Button onClick={() => handleChangeSQL()} variant={'outline'}>
                             {queryResult.isFetching && (<Spinner />)}
                             Executar
                         </Button>
@@ -207,9 +264,12 @@ export function Component() {
                 <ResizableHandle withHandle />
                 <ResizablePanel defaultSize={'50%'} className='relative'>
                     <div className='absolute top-0 right-0 left-0 bottom-0'>
-                        <Grid
-                            // onSortChanged={handleChangeSort} 
-                            columnDefs={columns} autoGenerateColumnDefs={false} rowData={queryResult.data?.result || []} />
+                        {error && (<div className='h-full p-4 items-center justify-center text-gray-400 flex'>{error.trim()}</div>)}
+                        {error == '' && (
+                            <Grid
+                                // onSortChanged={handleChangeSort} 
+                                columnDefs={columns} autoGenerateColumnDefs={false} rowData={queryResult.data?.result || []} />
+                        )}
                     </div>
                     <div className='absolute border-t px-4 right-0 left-0 h-12 border bottom-0 flex items-center'>
                         <span className='text-sm'>

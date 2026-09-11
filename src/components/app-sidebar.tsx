@@ -75,7 +75,7 @@ export function AppSidebar() {
                             <SidebarMenuButton onClick={openConsultas} size={menuSize}>
 
                                 <Code2 />
-                                Consultas
+                                Consultas SQL
 
                             </SidebarMenuButton>
                         </SidebarMenuItem>

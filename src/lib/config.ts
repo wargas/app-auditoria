@@ -2,12 +2,12 @@ import { Store } from "@tauri-apps/plugin-store"
 
 type Config = {
     buffer_size: number
-    dark: boolean
+    dark: boolean,
 }
 
 const DEFAULT_CONFIG:Config = {
     buffer_size: 1,
-    dark: false
+    dark: false,
 }
 
 export async function getConfig() {

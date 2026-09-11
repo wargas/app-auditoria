@@ -9,7 +9,7 @@ type Props = {
         name: string,
         columns: any[]
     }[],
-    onF5?: () => void,
+    onF5?: (value: string) => void,
     onChangeSQL?: (sql: string | undefined) => void
 }
 
@@ -43,7 +43,7 @@ export function EditorSql({ schema, onF5 = () => { }, onChangeSQL = () => { }, .
             label: 'run',
             keybindings: [KeyCode.F5],
             run() {
-                onF5()
+                onF5(editorRef.current?.getValue() ?? '')
             }
         })
     }
