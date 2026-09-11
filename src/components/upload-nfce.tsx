@@ -188,7 +188,7 @@ export function UploadNFCE() {
                 "BANDEIRA_DA_OPERADORA_DE_CARTAO_5",
                 "NUMERO_DE_AUTORIZACAO_DA_OPERACAO_5"
             ]
-            
+            setMessage(`salvando dados`)
             try {
                 const sql = `
                 insert or ignore into nfce (ID, ${colunas.join(', ')})
@@ -207,7 +207,7 @@ export function UploadNFCE() {
             }
 
         }
-        setMessage(`salvando dados`)
+        
 
         
 

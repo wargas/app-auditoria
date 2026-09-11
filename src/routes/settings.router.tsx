@@ -1,10 +1,13 @@
 import { useTheme } from "#components/theme-provider";
+import { Button } from "#components/ui/button";
 import { Input } from "#components/ui/input";
 import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemSeparator, ItemTitle } from "#components/ui/item";
 import { Spinner } from "#components/ui/spinner";
 import { Switch } from "#components/ui/switch";
 import { getConfig, setConfig } from "#lib/config";
 import { useQuery } from "@tanstack/react-query";
+import { invoke } from "@tauri-apps/api/core";
+import { open } from "@tauri-apps/plugin-dialog";
 import { ChangeEvent } from "react";
 
 export function Component() {
@@ -17,6 +20,19 @@ export function Component() {
             return await getConfig()
         }
     })
+
+    async function teste() {
+        const pathZip = await open({
+            multiple: false,  
+        })
+
+        if(pathZip) {
+            const files = await invoke('list_zip_files', { path: pathZip})
+
+            console.log({files})
+        }
+    }
+
 
     async function handleChange(event: ChangeEvent<HTMLInputElement, HTMLInputElement>) {
 
@@ -52,6 +68,8 @@ export function Component() {
                 </ItemActions>
             </Item>
             <ItemSeparator />
+
+            <Button className="hidden" onClick={teste}>TESTE</Button>
         </ItemGroup>
     </div>
 }

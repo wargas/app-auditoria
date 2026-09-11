@@ -18,27 +18,45 @@ export const routes = createHashRouter([
                 children: [
                     {
                         path: '',
-                        lazy: () => import('./routes/project-home')
+                        lazy: () => import('./routes/project-home'),
+                        handle: {
+                            title: 'Home'
+                        }
                     },
                     {
                         path: 'arquivos',
-                        lazy: () => import('./routes/upload-arquivos.router')
+                        lazy: () => import('./routes/upload-arquivos.router'),
+                        handle: {
+                            title: 'Arquivos'
+                        }
                     },
                     {
                         path: 'apuracao',
-                        lazy: () => import('./routes/apuracao.router')
+                        lazy: () => import('./routes/apuracao.router'),
+                        handle: {
+                            title: 'Apuração'
+                        }
                     },
                     {
                         path: 'outros-creditos',
-                        lazy: () => import('./routes/outros-creditos.router')
+                        lazy: () => import('./routes/outros-creditos.router'),
+                        handle: {
+                            title: 'Outros Créditos'
+                        }
                     },
                     {
                         path: 'relatorios',
-                        lazy: () => import('./routes/relatorios.router')
+                        lazy: () => import('./routes/relatorios.router'),
+                        handle: {
+                            title: 'Relatórios'
+                        }
                     },
                     {
                         path: 'settings',
-                        lazy: () => import('./routes/settings.router')
+                        lazy: () => import('./routes/settings.router'),
+                        handle: {
+                            title: 'Configurações'
+                        }
                     },
                    
                 ]

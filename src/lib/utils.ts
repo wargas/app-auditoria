@@ -17,6 +17,7 @@ export async function* readFileStream(path: string, bufferSize = 1024) {
   let fileBytesRead = 0
 
   while (true) {
+
     const bytesRead = await handle.read(buffer);
     if (bytesRead == null || bytesRead == 0) break;
 

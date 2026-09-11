@@ -1,11 +1,19 @@
-import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarRail, SidebarSeparator } from "#components/ui/sidebar"
-import {  ChartArea, Code2, FileText, HomeIcon, LogOut, Settings, Upload } from "lucide-react"
-import { Link } from "react-router"
+import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarRail, SidebarSeparator, useSidebar } from "#components/ui/sidebar"
+import { ChartArea, Code2, FileText, HomeIcon, LogOut, Settings, Upload } from "lucide-react"
+import { Link, useLocation } from "react-router"
 import { useApp } from "../app-context"
 import { WebviewWindow } from "@tauri-apps/api/webviewWindow"
+import { useMemo } from "react"
 
 export function AppSidebar() {
     const app = useApp()
+    const sidebar = useSidebar()
+    const { pathname } = useLocation()
+
+    const menuSize = useMemo(() => {
+
+        return sidebar.open ? 'lg' : 'default'
+    }, [sidebar.open])
 
     async function openConsultas() {
         new WebviewWindow(`consultas-${new Date().getTime()}`, {
@@ -14,16 +22,16 @@ export function AppSidebar() {
         })
     }
 
-    return <Sidebar variant="sidebar" collapsible="icon">
+    return <Sidebar variant="sidebar" collapsible="icon" className="top-(--header-height) h-[calc(100svh-var(--header-height))]!">
         <SidebarContent>
-            
+
             <SidebarGroup>
                 <SidebarGroupLabel>MENU</SidebarGroupLabel>
                 <SidebarGroupContent>
                     <SidebarMenu>
 
                         <SidebarMenuItem>
-                            <SidebarMenuButton asChild>
+                            <SidebarMenuButton isActive={pathname == '/'} asChild size={menuSize}>
                                 <Link to={`/`}>
                                     <HomeIcon />
                                     Home
@@ -31,7 +39,7 @@ export function AppSidebar() {
                             </SidebarMenuButton>
                         </SidebarMenuItem>
                         <SidebarMenuItem>
-                            <SidebarMenuButton asChild>
+                            <SidebarMenuButton isActive={pathname == '/arquivos'} asChild size={menuSize}>
                                 <Link to={`/arquivos`}>
                                     <Upload />
                                     Arquivos
@@ -39,7 +47,7 @@ export function AppSidebar() {
                             </SidebarMenuButton>
                         </SidebarMenuItem>
                         <SidebarMenuItem>
-                            <SidebarMenuButton asChild>
+                            <SidebarMenuButton isActive={pathname == '/apuracao'} asChild size={menuSize}>
                                 <Link to={`/apuracao`}>
                                     <ChartArea />
                                     Apuracao
@@ -47,7 +55,7 @@ export function AppSidebar() {
                             </SidebarMenuButton>
                         </SidebarMenuItem>
                         <SidebarMenuItem>
-                            <SidebarMenuButton asChild>
+                            <SidebarMenuButton isActive={pathname == '/outros-creditos'} asChild size={menuSize}>
                                 <Link to={`/outros-creditos`}>
                                     <ChartArea />
                                     Outros Creditos
@@ -55,7 +63,7 @@ export function AppSidebar() {
                             </SidebarMenuButton>
                         </SidebarMenuItem>
                         <SidebarMenuItem>
-                            <SidebarMenuButton asChild>
+                            <SidebarMenuButton isActive={pathname == '/relatorios'} asChild size={menuSize}>
                                 <Link to={`/relatorios`}>
                                     <FileText />
                                     Relatorios
@@ -64,7 +72,7 @@ export function AppSidebar() {
                         </SidebarMenuItem>
 
                         <SidebarMenuItem>
-                            <SidebarMenuButton onClick={openConsultas}>
+                            <SidebarMenuButton onClick={openConsultas} size={menuSize}>
 
                                 <Code2 />
                                 Consultas
@@ -73,7 +81,7 @@ export function AppSidebar() {
                         </SidebarMenuItem>
                         <SidebarSeparator />
                         <SidebarMenuItem>
-                            <SidebarMenuButton asChild>
+                            <SidebarMenuButton isActive={pathname == '/settings'} asChild size={menuSize}>
                                 <Link to={`/settings`}>
                                     <Settings />
                                     Configurações
@@ -81,7 +89,7 @@ export function AppSidebar() {
                             </SidebarMenuButton>
                         </SidebarMenuItem>
 
-                        
+
 
 
                     </SidebarMenu>
@@ -92,7 +100,7 @@ export function AppSidebar() {
         <SidebarFooter>
             <SidebarMenu>
                 <SidebarMenuItem>
-                    <SidebarMenuButton onClick={app.sair}><LogOut /> Fechar Projeto</SidebarMenuButton>
+                    <SidebarMenuButton size={menuSize} onClick={app.sair}><LogOut /> Fechar Projeto</SidebarMenuButton>
                 </SidebarMenuItem>
             </SidebarMenu>
         </SidebarFooter>
