@@ -7,6 +7,7 @@ import { Switch } from "#components/ui/switch";
 import { getConfig, setConfig } from "#lib/config";
 import { useQuery } from "@tanstack/react-query";
 import { invoke } from "@tauri-apps/api/core";
+import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { open } from "@tauri-apps/plugin-dialog";
 import { ChangeEvent } from "react";
 
@@ -23,14 +24,23 @@ export function Component() {
 
     async function teste() {
         const pathZip = await open({
-            multiple: false,  
+            multiple: false,
         })
 
-        if(pathZip) {
-            const files = await invoke('list_zip_files', { path: pathZip})
+        if (pathZip) {
+            const files = await invoke('list_zip_files', { path: pathZip })
 
-            console.log({files})
+            console.log({ files })
         }
+    }
+
+    async function browser() {
+        new WebviewWindow(`browser`, {
+            devtools: false,
+            url: 'https://www.sefaz.pe.gov.br',
+        })
+
+
     }
 
 
@@ -46,7 +56,7 @@ export function Component() {
     </div>
 
     return <div className="mt-4">
-        
+
         <ItemGroup>
             <Item size={`xs`}>
                 <ItemContent>
@@ -68,6 +78,17 @@ export function Component() {
                 </ItemActions>
             </Item>
             <ItemSeparator />
+            <Item size={`xs`}>
+                <ItemContent>
+                    <ItemTitle>Navegador</ItemTitle>
+                    <ItemDescription>Testar navegacao</ItemDescription>
+
+                </ItemContent>
+                <ItemActions>
+                    <Button onClick={browser} variant={'ghost'}>TESTAR</Button>
+                </ItemActions>
+            </Item>
+
 
             <Button className="hidden" onClick={teste}>TESTE</Button>
         </ItemGroup>

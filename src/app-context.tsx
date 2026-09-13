@@ -17,6 +17,7 @@ const AppContext = createContext<AppType>({} as AppType)
 
 export function AppProvider({ children }: ComponentProps<"div">) {
     const win = getCurrentWindow()
+
     const query = useQuery({
         queryKey: ['db'],
         queryFn: async () => {
@@ -28,8 +29,10 @@ export function AppProvider({ children }: ComponentProps<"div">) {
 
             win.setTitle(path.replace(/^sqlite\:/, ""))
 
+            
             const db = await Database.load(path)
-
+            
+            await initDb(db)
             return db;
         },
     })

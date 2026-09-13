@@ -156,8 +156,6 @@ export function ImportFile() {
 
                 }
 
-                await reader?.onEndReadFile(db)
-
                 updateFileStatus(file.path, {
                     progress: 100,
                     read: file.size,
@@ -231,7 +229,7 @@ export function ImportFile() {
                         <Fragment key={file.path}>
 
                             <TableRow key={file.path} >
-                                <TableCell className="truncate w-[50%]">
+                                <TableCell className="truncate max-w-[50]">
                                     <div className="flex items-center gap-2">
                                         {file.name}
                                     </div>

@@ -1,29 +1,35 @@
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupAction, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuAction, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem, useSidebar } from '#components/ui/sidebar';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '#components/ui/collapsible';
 import { Input } from './ui/input';
-import { ComponentProps, useState } from 'react';
+import { useState } from 'react';
 import { Button } from './ui/button';
-import { ChevronRight, Code, CodeIcon, Database, HistoryIcon, Table } from 'lucide-react';
+import { ChevronRight, Code, Database, HistoryIcon, Table } from 'lucide-react';
 import { cn } from '#lib/utils';
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from './ui/context-menu';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Store } from '@tauri-apps/plugin-store';
+import { useConsulta } from './consultas-provider';
+
+const menus = [
+    {
+        Icon: Database,
+        name: 'tabelas'
+    },
+    {
+        Icon: Code,
+        name: 'saved'
+    },
+    {
+        Icon: HistoryIcon,
+        name: 'history'
+    }
+]
 
 
-type Props = {
-    schema: {
-        name: string,
-        type: string,
-        sql: string,
-        columns: any[]
-    }[],
-    onChangeSQL: (sql: string) => void
-} & ComponentProps<"div">
-
-
-export function SidebarTables({ schema, onChangeSQL }: Props) {
+export function SidebarTables() {
 
     const sidebar = useSidebar()
+    const { schema, addTab, changeTabSQL, activeTab } = useConsulta()
 
     const [searchTable, setSearchTable] = useState('')
     const [menu, setMenu] = useState<'tabelas' | 'saved' | 'history' | 'none'>('tabelas')
@@ -84,33 +90,34 @@ export function SidebarTables({ schema, onChangeSQL }: Props) {
         setMenu(_menu)
     }
 
+    function sendSQL(sql: string) {
+        const id = addTab()
+
+        changeTabSQL(id, sql)
+
+        activeTab(id)
+    }
+
 
     return <Sidebar collapsible='icon' className="overflow-hidden *:data-[sidebar=sidebar]:flex-row">
-        <Sidebar collapsible='none' className="w-[calc(var(--sidebar-width-icon)+10px)]! border-r">
+        <Sidebar collapsible='none' className="w-14 border-r">
             <SidebarContent>
                 <SidebarGroup className='p-0'>
-                    <SidebarGroupContent className='px-1.5 pt-2'>
-                        <SidebarMenu >
-                            <SidebarMenuItem className=''>
-                                <SidebarMenuButton className='px-2 size-12 group-data-[collapsible=icon]:size-12! [&>svg]:size-6' onClick={() => changeMenu('tabelas')}>
+                    <SidebarGroupContent className='p pt-2'>
+                        <SidebarMenu>
+                            {menus.map(({Icon, name}) => (
+                                <SidebarMenuItem key={name}>
+                                    <SidebarMenuButton 
+                                    className={cn({ 'bg-secondary': name == menu }, 'size-12 ml-1 group-data-[collapsible=icon]:size-12! [&>svg]:size-5 justify-center')} 
+                                    onClick={() => changeMenu(name as 'tabelas')}>
 
-                                    <Database size={40} className={cn({ 'text-gray-300': menu !== `tabelas` })} />
+                                        <Icon className={cn({ 'text-gray-300': menu !== name })} />
 
-                                    {/* <span>tabelas</span> */}
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                            <SidebarMenuItem >
-                                <SidebarMenuButton className='px-2 size-12 group-data-[collapsible=icon]:size-12! [&>svg]:size-6' onClick={() => changeMenu('saved')}>
-                                    <CodeIcon className={cn({ 'text-gray-300': menu !== `saved` })} />
-                                    {/* <span>history</span> */}
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                            <SidebarMenuItem>
-                                <SidebarMenuButton className='px-2 size-12 group-data-[collapsible=icon]:size-12! [&>svg]:size-6' onClick={() => changeMenu('history')} >
-                                    <HistoryIcon className={cn({ 'text-gray-300': menu !== `history` })} />
-                                    {/* <span>history</span> */}
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
+                                        {/* <span>tabelas</span> */}
+                                    </SidebarMenuButton>
+                                </SidebarMenuItem>
+                            ))}
+                            
                         </SidebarMenu>
                     </SidebarGroupContent>
                 </SidebarGroup>
@@ -138,17 +145,17 @@ export function SidebarTables({ schema, onChangeSQL }: Props) {
                                                             <ChevronRight className='group-data-open:rotate-90' />
                                                         </Button>
                                                     </CollapsibleTrigger>
-                                                    <Table className={cn({'text-yellow-400': item.type == 'table', 'text-cyan-400': item.type == 'view'})} />
+                                                    <Table className={cn({ 'text-yellow-400': item.type == 'table', 'text-cyan-400': item.type == 'view' })} />
                                                     <span className='w-full'>
                                                         {item.name}
                                                     </span>
                                                 </SidebarMenuButton>
                                             </ContextMenuTrigger>
                                             <ContextMenuContent>
-                                                <ContextMenuItem onClick={() => onChangeSQL(item.sql)}>
+                                                <ContextMenuItem onClick={() => sendSQL(item.sql)}>
                                                     SQL Create
                                                 </ContextMenuItem>
-                                                <ContextMenuItem onClick={() => onChangeSQL(`select * from ${item.name}`)}>
+                                                <ContextMenuItem onClick={() => sendSQL(`select * from ${item.name}`)}>
                                                     Mostrar dados
                                                 </ContextMenuItem>
                                                 <ContextMenuItem>
@@ -158,10 +165,10 @@ export function SidebarTables({ schema, onChangeSQL }: Props) {
                                         </ContextMenu>
                                         <CollapsibleContent asChild>
                                             <SidebarMenuSub>
-                                                {item.columns.filter(col => String(col.column_name).toLocaleLowerCase().includes(searchTable.toLocaleLowerCase())).map(col => (
-                                                    <SidebarMenuSubItem key={col.cid}>
+                                                {item.columns.filter(col => String(col.name).toLocaleLowerCase().includes(searchTable.toLocaleLowerCase())).map(col => (
+                                                    <SidebarMenuSubItem key={col.name}>
                                                         <SidebarMenuSubButton>
-                                                            {col.column_name}
+                                                            {col.name}
                                                             <SidebarMenuAction className='text-xs text-gray-400'>{col.type}</SidebarMenuAction>
                                                         </SidebarMenuSubButton>
                                                     </SidebarMenuSubItem>
@@ -189,7 +196,7 @@ export function SidebarTables({ schema, onChangeSQL }: Props) {
                                 <SidebarMenuItem key={i}>
                                     <ContextMenu>
                                         <ContextMenuTrigger asChild>
-                                            <SidebarMenuButton onClick={() => onChangeSQL(item)}>
+                                            <SidebarMenuButton onClick={() => sendSQL(item)}>
                                                 <Code className='text-pink-500' ></Code>
                                                 <span>{item}</span>
                                             </SidebarMenuButton>
@@ -217,7 +224,7 @@ export function SidebarTables({ schema, onChangeSQL }: Props) {
                                 <SidebarMenuItem key={i}>
                                     <ContextMenu>
                                         <ContextMenuTrigger asChild>
-                                            <SidebarMenuButton onClick={() => onChangeSQL(item.sql)}>
+                                            <SidebarMenuButton onClick={() => sendSQL(item.sql)}>
                                                 <Code className='text-pink-500'></Code>
                                                 <span>{item.name}</span>
                                             </SidebarMenuButton>

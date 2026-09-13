@@ -1,5 +1,7 @@
 use std::{fs::File, io::BufReader};
 
+use tauri::{AppHandle, Emitter};
+
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
 fn greet(name: &str) -> String {
@@ -22,6 +24,11 @@ fn list_zip_files(path: String) -> Result<Vec<String>, String> {
     Ok(file_names)
 }
 
+#[tauri::command] 
+fn notify_change(app: AppHandle, theme: String) {
+    app.emit("change-theme", theme).unwrap();
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -37,7 +44,7 @@ pub fn run() {
         .plugin(tauri_plugin_sql::Builder::new().build())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![greet, list_zip_files])
+        .invoke_handler(tauri::generate_handler![greet, list_zip_files, notify_change])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

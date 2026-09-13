@@ -3,19 +3,18 @@ import { readText } from "@tauri-apps/plugin-clipboard-manager";
 import _ from "lodash";
 import { editor, KeyCode, KeyMod } from "monaco-editor";
 import { useEffect, useRef } from "react";
+import { useConsulta } from "./consultas-provider";
 
 type Props = {
-    schema: {
-        name: string,
-        columns: any[]
-    }[],
+    theme: 'dark' | 'light'
     onF5?: (value: string) => void,
     onChangeSQL?: (sql: string | undefined) => void
 }
 
-export function EditorSql({ schema, onF5 = () => { }, onChangeSQL = () => { }, ...props }: EditorProps & Props) {
+export function EditorSql({ theme, onF5 = () => { }, onChangeSQL = () => { }, ...props }: EditorProps & Props) {
     const editorRef = useRef<editor.IStandaloneCodeEditor>(null)
     const monaco = useMonaco()
+    const { schema } = useConsulta()
 
     const onMountEditor: OnMount = (editor) => {
         editorRef.current = editor
@@ -115,10 +114,10 @@ export function EditorSql({ schema, onF5 = () => { }, onChangeSQL = () => { }, .
                         return t.columns.map(c => {
 
                             return {
-                                label: c.column_name!,
+                                label: c.name!,
                                 kind: monaco.languages.CompletionItemKind.Keyword,
-                                insertText: String(c.column_name),
-                                documentation: `table ${c.column_name}`,
+                                insertText: String(c.name),
+                                documentation: `table ${c.name}`,
                                 range: {
                                     startLineNumber: position.lineNumber,
                                     endLineNumber: position.lineNumber,
@@ -144,6 +143,6 @@ export function EditorSql({ schema, onF5 = () => { }, onChangeSQL = () => { }, .
         onMount={onMountEditor}
         language='sql'
         height={`100%`}
-        theme={localStorage.getItem(`vite-ui-theme`) == "dark" ? "vs-dark" : "light"}
+        theme={theme == "dark" ? "vs-dark" : "light"}
         onChange={(sql) => onChangeSQL(sql)} />
 }

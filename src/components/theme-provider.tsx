@@ -1,3 +1,5 @@
+import { invoke } from "@tauri-apps/api/core"
+import { listen } from "@tauri-apps/api/event"
 import { createContext, useContext, useEffect, useState } from "react"
 
 type Theme = "dark" | "light" | "system"
@@ -26,15 +28,18 @@ export function ThemeProvider({
   storageKey = "vite-ui-theme",
   ...props
 }: ThemeProviderProps) {
-  
+
   const [theme, setTheme] = useState<Theme>(
     () => (localStorage.getItem(storageKey) as Theme) || defaultTheme
   )
 
   useEffect(() => {
+
     const root = window.document.documentElement
 
     root.classList.remove("light", "dark")
+
+    
 
     if (theme === "system") {
       const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
@@ -42,19 +47,40 @@ export function ThemeProvider({
         ? "dark"
         : "light"
 
+      
       root.classList.add(systemTheme)
       return
+
     }
+
 
     root.classList.add(theme)
   }, [theme])
 
+  useEffect(() => {
+    const setupLister = async () => {
+      const unlistener = await listen('change-theme', (t) => {
+        setTheme(t.payload as "dark")
+      })
+
+      return unlistener
+    }
+
+    const listenerPromise = setupLister()
+
+    return () => {
+      listenerPromise.then(unlistenr => unlistenr())
+    }
+
+
+  }, [])
+
   const value = {
     theme,
     setTheme: (theme: Theme) => {
-      console.log(`set theme`)
       localStorage.setItem(storageKey, theme)
-      setTheme(theme)
+      invoke('notify_change', {theme: theme})
+      // setTheme(theme)
     },
   }
 

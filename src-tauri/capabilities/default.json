@@ -6,7 +6,8 @@
     "main",
     "new-project",
     "consultas-*",
-    "config"
+    "config",
+    "browser"
   ],
   "permissions": [
     "core:default",
