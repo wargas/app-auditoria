@@ -1,14 +1,15 @@
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupAction, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuAction, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem, useSidebar } from '#components/ui/sidebar';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '#components/ui/collapsible';
-import { Input } from './ui/input';
 import { useState } from 'react';
 import { Button } from './ui/button';
-import { ChevronRight, Code, Database, HistoryIcon, Table } from 'lucide-react';
+import { ChevronRight, Code, Database, Filter, HistoryIcon, RefreshCw, Table } from 'lucide-react';
 import { cn } from '#lib/utils';
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from './ui/context-menu';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Store } from '@tauri-apps/plugin-store';
 import { useConsulta } from './consultas-provider';
+import { InputGroup, InputGroupAddon, InputGroupInput } from './ui/input-group';
+import { sortBy } from 'lodash';
 
 const menus = [
     {
@@ -33,6 +34,8 @@ export function SidebarTables() {
 
     const [searchTable, setSearchTable] = useState('')
     const [menu, setMenu] = useState<'tabelas' | 'saved' | 'history' | 'none'>('tabelas')
+
+    const client = useQueryClient()
 
     const queryHistory = useQuery({
         queryKey: [`sql-history`],
@@ -105,11 +108,11 @@ export function SidebarTables() {
                 <SidebarGroup className='p-0'>
                     <SidebarGroupContent className='p pt-2'>
                         <SidebarMenu>
-                            {menus.map(({Icon, name}) => (
+                            {menus.map(({ Icon, name }) => (
                                 <SidebarMenuItem key={name}>
-                                    <SidebarMenuButton 
-                                    className={cn({ 'bg-secondary': name == menu }, 'size-12 ml-1 group-data-[collapsible=icon]:size-12! [&>svg]:size-5 justify-center')} 
-                                    onClick={() => changeMenu(name as 'tabelas')}>
+                                    <SidebarMenuButton
+                                        className={cn({ 'bg-secondary': name == menu }, 'size-12 ml-1 group-data-[collapsible=icon]:size-12! [&>svg]:size-5 justify-center')}
+                                        onClick={() => changeMenu(name as 'tabelas')}>
 
                                         <Icon className={cn({ 'text-gray-300': menu !== name })} />
 
@@ -117,7 +120,7 @@ export function SidebarTables() {
                                     </SidebarMenuButton>
                                 </SidebarMenuItem>
                             ))}
-                            
+
                         </SidebarMenu>
                     </SidebarGroupContent>
                 </SidebarGroup>
@@ -126,13 +129,22 @@ export function SidebarTables() {
         <SidebarContent>
             {menu == 'tabelas' && (
                 <SidebarGroup>
-                    <SidebarGroupLabel>Tabelas</SidebarGroupLabel>
+                    <SidebarGroupLabel>
+                        Tabelas</SidebarGroupLabel>
+                    <SidebarGroupAction>
+                        <Button onClick={() => client.refetchQueries({queryKey: ["tables"]})} size={`icon-xs`} variant={`ghost`}><RefreshCw /></Button>
+                    </SidebarGroupAction>
                     <SidebarGroupContent>
                         <SidebarMenu>
                             <SidebarMenuItem>
-                                <Input value={searchTable} onChange={e => setSearchTable(e.target.value)} />
+                                <InputGroup>
+                                    <InputGroupInput value={searchTable} onChange={e => setSearchTable(e.target.value)} />
+                                    <InputGroupAddon align={'inline-end'}>
+                                        <Filter  />
+                                    </InputGroupAddon>
+                                </InputGroup>
                             </SidebarMenuItem>
-                            {schema.map(item => (
+                            {sortBy(schema, 'name').map(item => (
                                 <Collapsible asChild key={item.name} className='data-open:bg-muted group'>
                                     <SidebarMenuItem >
                                         <ContextMenu>

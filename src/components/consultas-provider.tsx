@@ -64,7 +64,7 @@ export function ConsultasProvider({ children }: ComponentProps<"div">) {
                     sql: String(item.sql),
                     columns: filter(query, { table_name: item.table_name }).map(col => {
                         return {
-                            name: String(col.name),
+                            name: String(col.column_name),
                             type: String(col.type)
                         }
                     })

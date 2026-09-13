@@ -61,7 +61,11 @@ export function ConsultaTab({ id }: Props) {
 
                 }
 
-                // queryTables.refetch()
+                if(executeStmts.length > 0) {
+
+                    queryClient.refetchQueries({queryKey: ['tables']})
+                    // queryTables.refetch()
+                }
 
                 const selectStmt = cst.statements.find(c => c.type == 'select_stmt')
 
@@ -229,7 +233,6 @@ export function ConsultaTab({ id }: Props) {
             </div>
             <div className='absolute border-t px-4 right-0 left-0 h-12 border bottom-0 flex items-center'>
                 <span className='text-sm'>
-
                     {message}
                 </span>
                 <div className='flex mx-auto'>

@@ -3,6 +3,7 @@ import { AllCommunityModule } from 'ag-grid-community';
 import { themeQuartz } from 'ag-grid-community';
 import { useResizeObserver } from 'usehooks-ts';
 import { useRef } from 'react';
+import { useTheme } from './theme-provider';
 
 const modules = [AllCommunityModule];
 
@@ -33,11 +34,12 @@ export const themeDark = themeLight
             mix: 0.07,
             onto: "backgroundColor"
         },
-        foregroundColor: "#FFF"
+        foregroundColor: "#FFF",
     });
 
-export function Grid(props: AgGridReactProps) {
+export function Grid({...props}: AgGridReactProps) {
     const ref = useRef<HTMLDivElement>(null!)
+    const theme = useTheme()
 
     const { height } = useResizeObserver({
         ref: ref,
@@ -48,7 +50,7 @@ export function Grid(props: AgGridReactProps) {
     return <div ref={ref} className='h-full'>
         <AgGridProvider modules={modules}>
             <div style={{ height: (height!) - 50 }}>
-                <AgGridReact gridOptions={{ enableCellTextSelection: true }} theme={localStorage.getItem('vite-ui-theme') == "dark" ? themeDark : themeLight} {...props} />
+                <AgGridReact gridOptions={{ enableCellTextSelection: true }} theme={theme.theme == "dark" ? themeDark : themeLight} {...props} />
             </div>
         </AgGridProvider>
     </div>

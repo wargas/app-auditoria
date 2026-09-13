@@ -8,7 +8,6 @@ export async function initDb(db: Database) {
         ${camposC100.map(c => `${c.name} ${c.type}`).join(`,`)}
     )`)
 
-
     await db.execute(`create table if not exists apuracao (PERIODO VARCHAR(10) PRIMARY KEY,  VL_TOT_DEBITOS FLOAT,  VL_AJ_DEBITOS FLOAT,  VL_TOT_AJ_DEBITOS FLOAT,  VL_ESTORNOS_CRED FLOAT,  VL_TOT_CREDITOS FLOAT,  VL_AJ_CREDITOS FLOAT,  VL_TOT_AJ_CREDITOS FLOAT,  VL_ESTORNOS_DEB FLOAT,  VL_SLD_CREDOR_ANT FLOAT,  VL_SLD_APURADO FLOAT,  VL_TOT_DED FLOAT,  VL_ICMS_RECOLHER FLOAT,  VL_SLD_CREDOR_TRANSPORTAR FLOAT,  DEB_ESP FLOAT)`)
 
     await db.execute(`create table if not exists ajuste_creditos (ID TEXT PRIMARY KEY, PERIODO TEXT, CODIGO TEXT, DESCRICAO TEXT, VALOR FLOAT, LINE TEXT)`)
@@ -25,5 +24,11 @@ export async function initDb(db: Database) {
         
     `)
     await db.execute(`create table if not exists cadastro (CNPJ TEXT PRIMARY KEY, NOME TEXT, IE TEXT)`)
+
+    // await db.execute(`create table if not exits ncms (ncm text, descricao text)`)
+
+    // const ncmsValues = listaNcm.map(n => `('${n.ncm}', '${n.descricao}')`)
+
+    // await db.execute(`insert or ignore into ncms (ncm, descricao) values ${ncmsValues.join(',')}`)
 
 }

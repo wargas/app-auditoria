@@ -19,11 +19,11 @@ export function Component() {
 
         <div className="h-full">
             <Grid rowData={query.data} columnDefs={[{
-                field: `periodo`, flex: 1, headerName: 'PERIODO'
+                field: `PERIODO`, flex: 1, headerName: 'PERIODO'
             },
-            { field: `codigo`, flex: 1 },
-            { field: `descricao`, flex: 2 },
-            { field: `valor`, flex: 1 }
+            { field: `CODIGO`, flex: 1 },
+            { field: `DESCRICAO`, flex: 2 },
+            { field: `VALOR`, flex: 1 }
             ]} />
         </div>
 

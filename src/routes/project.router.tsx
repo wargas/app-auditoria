@@ -40,7 +40,7 @@ export function Component() {
             <div className="flex flex-1">
                 <AppSidebar />
                 <SidebarInset>
-                    <main className="w-full h-[calc(100svh-var(--header-height))]!  overflow-auto">                       
+                    <main className="w-full h-[calc(100vh-3rem)]!  overflow-auto">                       
                         <Outlet />
                     </main>
                 </SidebarInset>
