@@ -6,7 +6,10 @@ import { useQuery } from "@tanstack/react-query";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { open, save } from "@tauri-apps/plugin-dialog";
 import Database from "@tauri-apps/plugin-sql";
+import { sep } from "@tauri-apps/api/path"
+
 import { ComponentProps, createContext, useContext } from "react";
+import _ from "lodash";
 
 type AppType = {
     db: Database | null | undefined,
@@ -18,6 +21,7 @@ const AppContext = createContext<AppType>({} as AppType)
 export function AppProvider({ children }: ComponentProps<"div">) {
     const win = getCurrentWindow()
 
+    
     const query = useQuery({
         queryKey: ['db'],
         queryFn: async () => {
@@ -27,7 +31,12 @@ export function AppProvider({ children }: ComponentProps<"div">) {
 
             if (!path) return null;
 
-            win.setTitle(path.replace(/^sqlite\:/, ""))
+            const fileName = _.last(path.split(sep()))
+
+            
+            if(fileName) {
+                win.setTitle(fileName.toUpperCase())
+            }
 
             
             const db = await Database.load(path)

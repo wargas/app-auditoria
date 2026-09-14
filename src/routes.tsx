@@ -51,6 +51,7 @@ export const routes = createHashRouter([
                             title: 'Relatórios'
                         }
                     },
+                    
                     {
                         path: 'settings',
                         lazy: () => import('./routes/settings.router'),
@@ -64,7 +65,11 @@ export const routes = createHashRouter([
             {
                 path: '/consultas',
                 lazy: () => import('./routes/consultas.router')
-            }
+            },
+            {
+                path: 'form-relatorio',
+                lazy: () => import('./routes/form-relatorio'),
+            },
         ]
     }
 ])

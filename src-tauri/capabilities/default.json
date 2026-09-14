@@ -7,7 +7,8 @@
     "new-project",
     "consultas-*",
     "config",
-    "browser"
+    "browser",
+    "form-relatorio"
   ],
   "permissions": [
     "core:default",
