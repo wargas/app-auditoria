@@ -2,7 +2,9 @@ import { Button } from '#components/ui/button'
 import { Field, FieldLabel } from '#components/ui/field'
 import { Input } from '#components/ui/input'
 import { Textarea } from '#components/ui/textarea'
+import { Excel } from '#lib/excel'
 import { getCurrentWindow } from '@tauri-apps/api/window'
+import { save } from '@tauri-apps/plugin-dialog'
 import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 
@@ -18,8 +20,23 @@ export function Component() {
         getCurrentWindow().setTitle("Novo Relatorio")
     }, [])
 
-    function handleSubmit(data: { description: string; sql: string }, ) {
-        console.log(data)
+    async function handleSubmit(_data: { description: string; sql: string }, ) {
+
+        const filePath = await save({
+            filters: [{
+                name: "excel", extensions: ["xlsx"]
+            }]
+        })
+
+        if(!filePath) return;
+
+        const excel = await Excel.Workbook()
+
+        excel.setSheet('Dados')
+
+        excel.writeCell(0, 0, "WARGAS DELMODNES TEIXEIRA")
+
+        await excel.save(filePath)
     }
 
     return <div className="h-screen p-4 flex flex-col gap-4">

@@ -15,15 +15,12 @@ export function Component() {
         }
     })
 
-    const campos = "vl_tot_debitos;vl_aj_debitos;vl_tot_aj_debitos;vl_estornos_cred;vl_tot_creditos;vl_aj_creditos;vl_tot_aj_creditos;vl_estornos_deb;vl_sld_credor_ant;vl_sld_apurado;vl_tot_ded;vl_icms_recolher;vl_sld_credor_transportar;deb_esp".split(";")
+    const campos = "VL_TOT_DEBITOS;VL_AJ_DEBITOS;VL_TOT_AJ_DEBITOS;VL_ESTORNOS_CRED;VL_TOT_CREDITOS;VL_AJ_CREDITOS;VL_TOT_AJ_CREDITOS;VL_ESTORNOS_DEB;VL_SLD_CREDOR_ANT;VL_SLD_APURADO;VL_TOT_DED;VL_ICMS_RECOLHER;VL_SLD_CREDOR_TRANSPORTAR;DEB_ESP".split(";")
 
     
-
-
-
     return <div className="h-full">
             <Grid columnDefs={[
-                { field: `periodo` },
+                { field: `PERIODO` },
                 // { field: `line` },
                 ...campos.map(c => ({ field: c }))
             ]} rowData={query.data} />

@@ -1,15 +1,15 @@
 import { Button } from "#components/ui/button";
 import { Spinner } from "#components/ui/spinner";
-import { initDb } from "#lib/database";
 import { getProject, setProject } from "#lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { open, save } from "@tauri-apps/plugin-dialog";
 import Database from "@tauri-apps/plugin-sql";
-import { sep } from "@tauri-apps/api/path"
+import { sep, resolveResource } from "@tauri-apps/api/path"
 
 import { ComponentProps, createContext, useContext } from "react";
 import _ from "lodash";
+import { copyFile, exists } from "@tauri-apps/plugin-fs";
 
 type AppType = {
     db: Database | null | undefined,
@@ -38,10 +38,17 @@ export function AppProvider({ children }: ComponentProps<"div">) {
                 win.setTitle(fileName.toUpperCase())
             }
 
+            const exist = await exists(path)
+
+            if(!exist) {
+                const resoursePath = await resolveResource('resources/modelo.sqlite')
+
+                await copyFile(resoursePath, path)
+            }
             
             const db = await Database.load(path)
             
-            await initDb(db)
+            // await initDb(db)
             return db;
         },
     })
@@ -66,9 +73,9 @@ export function AppProvider({ children }: ComponentProps<"div">) {
 
             const pathDb = `sqlite:${path}`
 
-            const db = await Database.load(pathDb)
+            // const db = await Database.load(pathDb)
 
-            await initDb(db)
+            // await initDb(db)
 
             await setProject(pathDb)
 
