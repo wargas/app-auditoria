@@ -7,8 +7,10 @@ import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { useApp } from '../app-context'
 import { toast } from 'sonner'
+import { useQueryClient } from '@tanstack/react-query'
 
 export function Component() {
+    const queryClient = useQueryClient()
     const { db } = useApp()
     const form = useForm({
         defaultValues: {
@@ -25,8 +27,11 @@ export function Component() {
         const insert = await db?.execute(`insert into relatorios (name, sql) values ($1, $2)`, [_data.description, _data.sql]);
 
         if(insert?.lastInsertId) {
-            getCurrentWindow().close()
             toast.success('Salvo com sucesso')
+
+            await queryClient.refetchQueries({queryKey: ['relatorios']})
+
+            await getCurrentWindow().close()
         }
     }
 
@@ -43,7 +48,7 @@ export function Component() {
         </Field>
 
         <div className='flex gap-4 justify-end'>
-            <Button variant={'outline'}>Fechar</Button>
+            <Button onClick={() => getCurrentWindow().close()} variant={'outline'}>Fechar</Button>
             <Button variant={'default'} onClick={form.handleSubmit(handleSubmit)}>Salvar</Button>
         </div>
     </div>

@@ -61,7 +61,7 @@ export function Component() {
                 await fileHandle.write(encoder.encode(text))
 
                 console.log(`${count} de ${items.length} gravados`)
-                toast.loading(`${count} de ${items.length} gravados`, { id: toasterId! })
+                toast.loading(`${count} de ${items.length} gravados`, { id: toasterId })
             }
 
 
@@ -85,6 +85,12 @@ export function Component() {
             height: 380,
             title: "Salvar Relatorio"
         })
+
+        // win.onCloseRequested((ev) => {
+        //     queryList.refetch()
+
+        //     ev.preventDefault()
+        // })
     }
 
     return <div className="flex flex-col gap-1 p-4">
