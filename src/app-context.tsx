@@ -39,7 +39,7 @@ export function AppProvider({ children }: ComponentProps<"div">) {
 
 
             if (fileName) {
-                win.setTitle(fileName.toUpperCase())
+                // win.setTitle(fileName.toUpperCase())
             }
 
             const pathFile = path.replace('sqlite:', '')
