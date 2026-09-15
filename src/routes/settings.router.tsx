@@ -37,7 +37,7 @@ export function Component() {
     async function browser() {
         new WebviewWindow(`browser`, {
             devtools: false,
-            url: 'https://www.sefaz.pe.gov.br',
+            url: 'https://intranet.sefaz.pe.gov.br',
         })
 
 
