@@ -2,13 +2,14 @@ import { Button } from '#components/ui/button'
 import { Field, FieldLabel } from '#components/ui/field'
 import { Input } from '#components/ui/input'
 import { Textarea } from '#components/ui/textarea'
-import { Excel } from '#lib/excel'
 import { getCurrentWindow } from '@tauri-apps/api/window'
-import { save } from '@tauri-apps/plugin-dialog'
 import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
+import { useApp } from '../app-context'
+import { toast } from 'sonner'
 
 export function Component() {
+    const { db } = useApp()
     const form = useForm({
         defaultValues: {
             description: '',
@@ -21,22 +22,12 @@ export function Component() {
     }, [])
 
     async function handleSubmit(_data: { description: string; sql: string }, ) {
+        const insert = await db?.execute(`insert into relatorios (name, sql) values ($1, $2)`, [_data.description, _data.sql]);
 
-        const filePath = await save({
-            filters: [{
-                name: "excel", extensions: ["xlsx"]
-            }]
-        })
-
-        if(!filePath) return;
-
-        const excel = await Excel.Workbook()
-
-        excel.setSheet('Dados')
-
-        excel.writeCell(0, 0, "WARGAS DELMODNES TEIXEIRA")
-
-        await excel.save(filePath)
+        if(insert?.lastInsertId) {
+            getCurrentWindow().close()
+            toast.success('Salvo com sucesso')
+        }
     }
 
     return <div className="h-screen p-4 flex flex-col gap-4">

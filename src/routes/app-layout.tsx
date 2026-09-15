@@ -2,10 +2,12 @@ import { Outlet, useRouteError } from "react-router";
 import { AppProvider } from "../app-context";
 import { get } from "lodash";
 import { AlertCircleIcon } from "lucide-react";
+import { Toaster } from "#components/ui/sonner";
 
 export function Component() {
     return <AppProvider>
         <Outlet />
+        <Toaster />
     </AppProvider>
 }
 
