@@ -42,9 +42,13 @@ export function AppProvider({ children }: ComponentProps<"div">) {
                 win.setTitle(fileName.toUpperCase())
             }
 
-            const exist = await exists(path)
+            const pathFile = path.replace('sqlite:', '')
 
-            info(JSON.stringify({fileName, exist}))
+            info(JSON.stringify({fileName, pathFile}))
+            
+            const exist = await exists(pathFile)
+            info(JSON.stringify({fileName, pathFile, exist}))
+
 
             if (!exist) {
                 toast.error("Arquivo nao encontrado")
