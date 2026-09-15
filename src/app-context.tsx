@@ -22,11 +22,12 @@ const AppContext = createContext<AppType>({} as AppType)
 export function AppProvider({ children }: ComponentProps<"div">) {
     const win = getCurrentWindow()
 
-    
     const query = useQuery({
         queryKey: ['db'],
+        refetchOnWindowFocus: false,
         queryFn: async () => {
             const path = await getProject()
+
 
             win.setTitle('auditoria')
 
@@ -34,33 +35,30 @@ export function AppProvider({ children }: ComponentProps<"div">) {
 
             const fileName = _.last(path.split(sep()))
 
-            
-            if(fileName) {
+
+            if (fileName) {
                 win.setTitle(fileName.toUpperCase())
             }
 
             const exist = await exists(path)
 
-            if(!exist) {
-                const resoursePath = await resolveResource('resources/modelo.sqlite')
+            if (!exist) {
+                toast.error("Arquivo nao encontrado")
+                win.setTitle('auditoria')
+                await setProject("")
 
-                await copyFile(resoursePath, path)
+                return null
             }
-            
+
             const db = await Database.load(path)
-            
+
             // await initDb(db)
             return db;
-        },
-        throwOnError(error) {
-            
-            toast.error(String(error))
-
-            return true
-        },
+        }
     })
 
     async function sairProjeto() {
+        toast.info("sair do projeto")
         await setProject('')
         query.refetch()
     }
@@ -78,11 +76,12 @@ export function AppProvider({ children }: ComponentProps<"div">) {
 
         if (path) {
 
+            
+            const resoursePath = await resolveResource('resources/modelo.sqlite')
+            
+            await copyFile(resoursePath, path)
+            
             const pathDb = `sqlite:${path}`
-
-            // const db = await Database.load(pathDb)
-
-            // await initDb(db)
 
             await setProject(pathDb)
 
@@ -110,13 +109,12 @@ export function AppProvider({ children }: ComponentProps<"div">) {
         query.refetch()
     }
 
+    if (!!query.data && query.isFetched) {
+        return children
+    }
+
     return <AppContext.Provider value={{ db: query.data, sair: sairProjeto }}>
 
-        {query.isError && (
-            <div>
-                {JSON.stringify(query.error)}
-            </div>
-        )}
 
         {query.isFetching && (
             <div className="flex h-screen justify-center items-center gap-4">
@@ -124,13 +122,14 @@ export function AppProvider({ children }: ComponentProps<"div">) {
             </div>
         )}
 
-        {query.data == null ? (
+        {!query.data && !query.isFetching && (
             <div className="flex h-screen justify-center items-center gap-4">
+
                 <Button onClick={abrirProjeto} variant={`outline`}>Abrir Projeto</Button>
 
                 <Button onClick={criarProjeto} variant={`outline`}>Criar Novo Projeto</Button>
             </div>
-        ) : children}
+        )}
     </AppContext.Provider>
 }
 

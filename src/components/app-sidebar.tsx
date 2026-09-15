@@ -1,13 +1,14 @@
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarRail, SidebarSeparator, useSidebar } from "#components/ui/sidebar"
 import { ChartArea, Code2, FileText, HomeIcon, LogOut, Settings, Upload } from "lucide-react"
 import { Link, useLocation } from "react-router"
-import { useApp } from "../app-context"
 import { WebviewWindow } from "@tauri-apps/api/webviewWindow"
 import { useMemo } from "react"
+import { setProject } from "#lib/utils"
+import { useQueryClient } from "@tanstack/react-query"
 
 export function AppSidebar() {
-    const app = useApp()
     const sidebar = useSidebar()
+    const client = useQueryClient()
     const { pathname } = useLocation()
 
     const menuSize = useMemo(() => {
@@ -20,6 +21,11 @@ export function AppSidebar() {
             devtools: true,
             url: '#/consultas'
         })
+    }
+
+    async function fecharProjeto() {
+        setProject("")
+        await client.refetchQueries({queryKey: ["db"]})
     }
 
     return <Sidebar variant="sidebar" collapsible="icon" className="top-(--header-height) h-[calc(100svh-var(--header-height))]!">
@@ -100,7 +106,7 @@ export function AppSidebar() {
         <SidebarFooter>
             <SidebarMenu>
                 <SidebarMenuItem>
-                    <SidebarMenuButton size={menuSize} onClick={app.sair}><LogOut /> Fechar Projeto</SidebarMenuButton>
+                    <SidebarMenuButton size={menuSize} onClick={() => fecharProjeto()}><LogOut /> Fechar Projeto</SidebarMenuButton>
                 </SidebarMenuItem>
             </SidebarMenu>
         </SidebarFooter>

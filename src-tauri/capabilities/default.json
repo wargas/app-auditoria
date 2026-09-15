@@ -82,6 +82,7 @@
     "clipboard-manager:default",
     "clipboard-manager:allow-read-text",
     "clipboard-manager:allow-write-text",
+    "fs:allow-exists",
     {
       "identifier": "opener:allow-open-path",
       "allow": [{
