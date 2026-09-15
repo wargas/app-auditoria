@@ -10,6 +10,7 @@ import { sep, resolveResource } from "@tauri-apps/api/path"
 import { ComponentProps, createContext, useContext } from "react";
 import _ from "lodash";
 import { copyFile, exists } from "@tauri-apps/plugin-fs";
+import { toast } from "sonner";
 
 type AppType = {
     db: Database | null | undefined,
@@ -50,6 +51,12 @@ export function AppProvider({ children }: ComponentProps<"div">) {
             
             // await initDb(db)
             return db;
+        },
+        throwOnError(error) {
+            
+            toast.error(String(error))
+
+            return true
         },
     })
 
@@ -104,6 +111,12 @@ export function AppProvider({ children }: ComponentProps<"div">) {
     }
 
     return <AppContext.Provider value={{ db: query.data, sair: sairProjeto }}>
+
+        {query.isError && (
+            <div>
+                {JSON.stringify(query.error)}
+            </div>
+        )}
 
         {query.isFetching && (
             <div className="flex h-screen justify-center items-center gap-4">
