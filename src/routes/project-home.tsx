@@ -109,7 +109,7 @@ export function Component() {
             <Field className="flex-5">
                 <FieldLabel>CNPJ</FieldLabel>
 
-                <Input disabled value={queryCadastro.data?.CNPJ} />
+                <Input  value={queryCadastro.data?.CNPJ} />
             </Field>
 
             <Field className="flex-12">

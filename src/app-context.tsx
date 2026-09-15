@@ -119,12 +119,11 @@ export function AppProvider({ children }: ComponentProps<"div">) {
         query.refetch()
     }
 
-    if (!!query.data && query.isFetched) {
-        return children
-    }
-
+   
     return <AppContext.Provider value={{ db: query.data, sair: sairProjeto }}>
-
+        {!!query.data && query.isFetched && (
+            children
+        )}
 
         {query.isFetching && (
             <div className="flex h-screen justify-center items-center gap-4">

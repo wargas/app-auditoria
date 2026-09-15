@@ -8,27 +8,28 @@ import { routes } from "./routes";
 import "./App.css";
 import { AppProvider } from "./app-context";
 import { ThemeProvider } from "#components/theme-provider";
+import { error } from "@tauri-apps/plugin-log";
 // import { warn, debug, trace, info, error } from '@tauri-apps/plugin-log';
 
 const queryClient = new QueryClient()
 
 
-// function forwardConsole(
-//   fnName: 'log' | 'debug' | 'info' | 'warn' | 'error',
-//   logger: (message: string) => Promise<void>
-// ) {
-//   const original = console[fnName];
-//   console[fnName] = (message) => {
-//     original(message);
-//     logger(message);
-//   };
-// }
+function forwardConsole(
+  fnName: 'log' | 'debug' | 'info' | 'warn' | 'error',
+  logger: (message: string) => Promise<void>
+) {
+  const original = console[fnName];
+  console[fnName] = (message) => {
+    original(message);
+    logger(JSON.stringify(message));
+  };
+}
 
 // forwardConsole('log', trace);
 // forwardConsole('debug', debug);
 // forwardConsole('info', info);
 // forwardConsole('warn', warn);
-// forwardConsole('error', error);
+forwardConsole('error', error);
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
