@@ -238,3 +238,33 @@ export const camposC100 = [
     { name: "VL_PIS_ST", type: 'float' },
     { name: "VL_COFINS_ST", type: 'float' },
 ];
+
+export const campos0200 = [
+    { "name": "COD_ITEM", type: 'text' },
+    { "name": "DESCR_ITEM", type: 'text' },
+    { "name": "COD_BARRA", type: 'text' },
+    { "name": "COD_ANT_ITEM", type: 'text' },
+    { "name": "UNID_INV", type: 'text' },
+    { "name": "TIPO_ITEM", type: 'text' },
+    { "name": "COD_NCM", type: 'text' },
+    { "name": "EX_IPI", type: 'text' },
+    { "name": "COD_GEN", type: 'text' },
+    { "name": "COD_LST", type: 'text' },
+    { "name": "ALIQ_ICMS", type: 'float' },
+    { "name": "CEST", type: 'text' },
+    { "name": "COD_BENEF", type: 'text' },
+]
+
+export const camposH010 = [
+    { "name": "DATA", type: "text" },
+    { "name": "COD_ITEM", type: "text" },
+    { "name": "UNID", type: "text" },
+    { "name": "QTD", type: "float" },
+    { "name": "VL_UNIT", type: "float" },
+    { "name": "VL_ITEM", type: "float" },
+    { "name": "IND_PROP", type: "text" },
+    { "name": "COD_PART", type: "text" },
+    { "name": "TXT_COMPL", type: "text" },
+    { "name": "COD_CTA", type: "text" },
+    { "name": "VL_ITEM_IR", type: "text" },
+]

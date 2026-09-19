@@ -1,6 +1,6 @@
 import Database from "@tauri-apps/plugin-sql";
 import { parse as parseCSV } from 'papaparse';
-import { camposC100, camposNFCE, camposNFE } from "../config";
+import { campos0200, camposC100, camposH010, camposNFCE, camposNFE } from "../config";
 
 
 export interface ReadFile {
@@ -30,7 +30,7 @@ export class ReadFileNFCE implements ReadFile {
             .map(l => l.replace(/=/g, '').replace(/'/g, ""))
             .map(l => parseCSV<string[]>(l).data[0])
 
-       
+
         const values = data.map(csv => csv.map(c => c.replace(/"/g, "")))
             .map(l => JSON.stringify(l))
             .map(l => `('${l}')`)
@@ -51,20 +51,20 @@ export class ReadFileNFCE implements ReadFile {
 
             const primaryValue = `replace(json_extract(line, '$[${i}]'), '"', '')`
 
-            if(c.type == 'float') {
-                const removePontos =  `replace(${primaryValue}, '.', '')`
+            if (c.type == 'float') {
+                const removePontos = `replace(${primaryValue}, '.', '')`
 
                 return `cast(replace(${removePontos}, ',', '.') as float) as ${c.name}`
             }
 
-            if(c.type == 'percent') {
+            if (c.type == 'percent') {
                 const valueFloat = `replace(${primaryValue}, ',', '.')`;
 
                 return `cast(replace(${valueFloat}, '%', '') as float) as ${c.name}`
             }
 
-            if(c.type == 'date') {
-               return  `
+            if (c.type == 'date') {
+                return `
                 substr(${primaryValue}, 7, 4) || '-'  || substr(${primaryValue}, 4, 2) || '-'  || substr(${primaryValue}, 1, 2) as ${c.name}`
             }
 
@@ -79,7 +79,7 @@ export class ReadFileNFCE implements ReadFile {
                 ${values.join(`,\n`)}
                 from nfce_temp    
             `
-        
+
         await db.execute(sql)
 
         await db.execute(`drop table nfce_temp`)
@@ -121,20 +121,20 @@ export class ReadFileNFE implements ReadFile {
 
             const primaryValue = `replace(json_extract(line, '$[${i}]'), '"', '')`
 
-            if(c.type == 'float') {
-                const removePontos =  `replace(${primaryValue}, '.', '')`
+            if (c.type == 'float') {
+                const removePontos = `replace(${primaryValue}, '.', '')`
 
                 return `cast(replace(${removePontos}, ',', '.') as float) as ${c.name}`
             }
 
-            if(c.type == 'percent') {
+            if (c.type == 'percent') {
                 const valueFloat = `replace(${primaryValue}, ',', '.')`;
 
                 return `cast(replace(${valueFloat}, '%', '') as float) as ${c.name}`
             }
 
-            if(c.type == 'date') {
-               return  `
+            if (c.type == 'date') {
+                return `
                 substr(${primaryValue}, 7, 4) || '-'  || substr(${primaryValue}, 4, 2) || '-'  || substr(${primaryValue}, 1, 2) as ${c.name}`
             }
 
@@ -150,7 +150,7 @@ export class ReadFileNFE implements ReadFile {
                 from nfe_temp    
             `
 
-        
+
 
         await db.execute(sql)
 
@@ -162,6 +162,7 @@ export class ReadFileNFE implements ReadFile {
 export class ReadFileSPED implements ReadFile {
     name = "SPED";
     periodo = '';
+    dataInventario = ''
 
     validate(line: string) {
         return line.startsWith('|0000|')
@@ -178,7 +179,7 @@ export class ReadFileSPED implements ReadFile {
     async onReadLines(lines: string[], db: Database) {
 
 
-        const registros = ['0000', 'E110', 'E111', 'C100']
+        const registros = ['0000', 'E110', 'E111', 'C100', 'H005', 'H010', '0200']
 
         const lineAbertura = lines.find(f => f.startsWith('|0000|'))
 
@@ -191,15 +192,23 @@ export class ReadFileSPED implements ReadFile {
             this.periodo = partes[4].replace(/(\d{2})(\d{2})(\d{4})/, "$3-$2")
         }
 
+        const lineAberturaInventario = lines.find(f => f.startsWith('|H005|'))
+
+        if (lineAberturaInventario) {
+            const partes = lineAberturaInventario.split('|')
+
+            this.dataInventario = partes[2]
+        }
+
         const linesSelecionadas = lines.filter(l => {
             const partes = l.split('|')
 
-            
-           
+
+
             return registros.includes(partes[1])
         })
 
-        
+
 
         if (linesSelecionadas.length > 0) {
             const values = linesSelecionadas.map(l => {
@@ -209,41 +218,52 @@ export class ReadFileSPED implements ReadFile {
                 return `('${partes[1]}', '${this.periodo}', '${JSON.stringify(partes)}')`
             })
 
-            
-            
+
+
             await db.execute(`insert into sped_temp (registro, periodo, line) values ${values.join(',')}`)
         }
     }
 
     async onEndReadFile(db: Database) {
-        const values = camposC100.map((c, i) => {
+        const mapValues = (c: any, i: number) => {
 
-            const primaryValue = `replace(json_extract(line, '$[${i+2}]'), '"', '')`
+            const primaryValue = `replace(json_extract(line, '$[${i + 2}]'), '"', '')`
 
-            if(c.type == 'float') {
-                const removePontos =  `replace(${primaryValue}, '.', '')`
+            if (c.type == 'float') {
+                const removePontos = `replace(${primaryValue}, '.', '')`
 
                 return `cast(replace(${removePontos}, ',', '.') as float) as ${c.name}`
             }
 
-            if(c.type == 'percent') {
+            if (c.type == 'percent') {
                 const valueFloat = `replace(${primaryValue}, ',', '.')`;
 
                 return `cast(replace(${valueFloat}, '%', '') as float) as ${c.name}`
             }
 
-            if(c.type == 'date') {
-               return  `
+            if (c.type == 'date') {
+                return `
                 substr(${primaryValue}, 5, 4) || '-'  || substr(${primaryValue}, 3, 2) || '-'  || substr(${primaryValue}, 1, 2) as ${c.name}`
             }
 
 
             return `${primaryValue} as ${c.name}`
-        })
+        }
+        const values = camposC100.map(mapValues)
+        const values0200 = campos0200.map(mapValues)
+        const valuesH010 = camposH010.map(mapValues)
 
-        const rows = await db.select(`select count(*) as c from sped_temp where registro = 'C100'`)
+        // const rows = await db.select(`select count(*) as c from sped_temp where registro = 'C100'`)
 
-        console.log(rows)
+        await db.execute(`
+            insert or ignore into estoque (${camposH010.map(c => c.name).join(`,`)}, DATA) select ${valuesH010.join(',')}, '${this.dataInventario}'
+          from sped_temp where registro = 'H010'
+        `);
+
+        await db.execute(`
+            insert or ignore into produtos (${campos0200.map(c => c.name).join(`,`)}) select ${values0200.join(',')}
+          from sped_temp where registro = '0200'
+        `);
 
         await db.execute(`
             insert or ignore into sped_df (ID, PERIODO, ${camposC100.map(c => c.name).join(`,`)}) select 

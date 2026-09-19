@@ -7,7 +7,7 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export async function* readFileStream(path: string, bufferSize = 1024) {
+export async function* readFileStream(path: string, bufferSize = 1024, enconding = "latin1") {
   const handle = await open(path, { read: true })
 
   const stat = await handle.stat()
@@ -23,7 +23,7 @@ export async function* readFileStream(path: string, bufferSize = 1024) {
 
     fileBytesRead += bytesRead
 
-    const chunk = leftOver + new TextDecoder('latin1').decode(buffer.subarray(0, bytesRead));
+    const chunk = leftOver + new TextDecoder(enconding).decode(buffer.subarray(0, bytesRead));
 
     const lines = chunk.split('\n');
 

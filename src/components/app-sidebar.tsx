@@ -87,6 +87,14 @@ export function AppSidebar() {
                         </SidebarMenuItem>
                         <SidebarSeparator />
                         <SidebarMenuItem>
+                            <SidebarMenuButton isActive={pathname == '/import-csv'} asChild size={menuSize}>
+                                <Link to={`/import-csv`}>
+                                    <Settings />
+                                    Importar CSV
+                                </Link>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        <SidebarMenuItem>
                             <SidebarMenuButton isActive={pathname == '/settings'} asChild size={menuSize}>
                                 <Link to={`/settings`}>
                                     <Settings />
