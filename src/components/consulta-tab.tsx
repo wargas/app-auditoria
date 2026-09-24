@@ -86,7 +86,7 @@ export function ConsultaTab({ id }: Props) {
 
                 await queryClient.refetchQueries({ queryKey: ['sql-history'] })
 
-                const limit = 100;
+                const limit = 1000;
                 const offset = (page - 1) * limit
 
                 const queryWrap = `select * from (${select}) limit ${offset}, ${limit}`
@@ -200,7 +200,7 @@ export function ConsultaTab({ id }: Props) {
 
     async function handleChangeEditor(value: string | undefined) {
         if (!value) return;
-        info(`hadle change SQL`)
+        // info(`hadle change SQL`)
         setSQL(value)
     }
 
@@ -211,7 +211,7 @@ export function ConsultaTab({ id }: Props) {
             handleSendSQL()
         })
 
-        console.log(listener, `run-${id}`)
+        // console.log(listener, `run-${id}`)
 
         return () => {
             listener.removeAllListeners()
