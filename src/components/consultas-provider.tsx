@@ -2,11 +2,10 @@ import { useQuery } from "@tanstack/react-query";
 import { ComponentProps, createContext, useCallback, useContext, useEffect, useState } from "react";
 import { useApp } from "../app-context";
 import { filter, uniqBy } from "lodash";
-import EventEmitter from 'eventemitter3';
 import { useMonaco } from "@monaco-editor/react";
 import _ from "lodash";
 
-export const emitter = new EventEmitter();
+
 
 type Schema = {
     name: string,

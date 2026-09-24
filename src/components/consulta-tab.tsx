@@ -4,7 +4,7 @@ import { EditorSql } from "./editor-sql"
 import { useTheme } from "./theme-provider"
 import { Button } from "./ui/button"
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "./ui/resizable"
-import { useCallback, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { useApp } from "../app-context"
 import { show, parse } from "sql-parser-cst"
 import { Store } from "@tauri-apps/plugin-store"
@@ -16,7 +16,9 @@ import { create } from "@tauri-apps/plugin-fs"
 import { save } from "@tauri-apps/plugin-dialog"
 import _ from "lodash"
 import { ColDef } from "ag-grid-community"
-import { useSql } from "./consultas-provider"
+import {  useSql } from "./consultas-provider"
+import { info } from "@tauri-apps/plugin-log"
+import emitter from "#lib/emitter"
 
 type Props = {
     id: string
@@ -36,7 +38,8 @@ export function ConsultaTab({ id }: Props) {
     const queryResult = useQuery({
         queryKey: ['query-result', hashQuery],
         queryFn: async () => {
-            if(hashQuery == '') return;
+            info(`rodando SQL`)
+            if(hashQuery == '') return {};
             setError('')
             try {
 
@@ -52,6 +55,7 @@ export function ConsultaTab({ id }: Props) {
 
                 const executeStmts = cst.statements.filter(c => c.type != 'select_stmt' && c.type != 'empty')
 
+                
                 for await (const stmt of executeStmts) {
                     const sql = show(stmt).trim();
 
@@ -157,10 +161,14 @@ export function ConsultaTab({ id }: Props) {
 
         const cols = Object.keys(result[0]).map(k => {
             return { field: k, headerName: k.toUpperCase() }
-        }).map(c => {
+        }).map((c:ColDef) => {
 
             if (c.field == '#') {
                 return { ...c, width: 100, pinned: 'left' }
+            }
+
+            c.valueGetter = (params) => {
+                return params.node?.data[c.field!]
             }
 
             return c
@@ -187,15 +195,28 @@ export function ConsultaTab({ id }: Props) {
 
         setHashQuery(crypto.randomUUID())
 
-        queryResult.refetch()
-
         
     }, [sql])
 
     async function handleChangeEditor(value: string | undefined) {
         if (!value) return;
+        info(`hadle change SQL`)
         setSQL(value)
     }
+
+    useEffect(() => {
+        const listener = emitter.on(`run-${id}`, () => {
+            info(`Escuta`)
+
+            handleSendSQL()
+        })
+
+        console.log(listener, `run-${id}`)
+
+        return () => {
+            listener.removeAllListeners()
+        }
+    }, [id])
 
     
     return <ResizablePanelGroup orientation='vertical'>
@@ -204,6 +225,7 @@ export function ConsultaTab({ id }: Props) {
                 <EditorSql
                     theme={theme as 'dark'}
                     onF5={(s) => {
+                        info(`F5`)
                         setSQL(s)
                         handleSendSQL()
                     }}
@@ -223,7 +245,10 @@ export function ConsultaTab({ id }: Props) {
         </ResizablePanel>
         <ResizableHandle withHandle />
         <ResizablePanel defaultSize={'50%'} className='relative'>
-            <div className='absolute top-0 right-0 left-0 bottom-0'>
+            {/* {JSON.stringify(columns)}
+            <br />
+            {JSON.stringify(queryResult.data?.result)} */}
+            <div className='absolute top-0 right-0 left-0 bottom-0 hiddens'>
                 {error && (<div className='h-full p-4 items-center justify-center text-gray-400 flex'>{error.trim()}</div>)}
                 {error == '' && (
                     <Grid

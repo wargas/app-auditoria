@@ -60,10 +60,10 @@ export const routes = createHashRouter([
                         }
                     },
                     {
-                        path: 'import-csv',
-                        lazy: () => import('./routes/import-csv'),
+                        path: 'estoque',
+                        lazy: () => import('./routes/analitico-estoque'),
                         handle: {
-                            title: 'Importar arquivo CSV'
+                            title: 'Analitico de estoque'
                         }
                     },
                    

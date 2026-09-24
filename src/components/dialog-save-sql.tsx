@@ -39,7 +39,7 @@ export function DialogSaveSQL({ sql }:ComponentProps<"div"> & Props) {
             Salvar consulta
         </Button>
     </DialogTrigger>
-    <DialogContent>
+    <DialogContent className="max-w-2xl!">
         <DialogHeader>
             <DialogTitle>Salvar consulta</DialogTitle>
         </DialogHeader>
@@ -47,7 +47,7 @@ export function DialogSaveSQL({ sql }:ComponentProps<"div"> & Props) {
 
             <Input value={name} onChange={v => setName(v.target.value)} placeholder='Nome da consulta' />
 
-            <Textarea value={sql}></Textarea>
+            <Textarea className="h-40" value={sql}></Textarea>
 
             <Button onClick={() => mutationSaveSQL.mutate()} variant={'outline'}>Salvar</Button>
         </div>

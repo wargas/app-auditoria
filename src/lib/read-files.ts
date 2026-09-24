@@ -1,6 +1,6 @@
 import Database from "@tauri-apps/plugin-sql";
 import { parse as parseCSV } from 'papaparse';
-import { campos0200, camposC100, camposH010, camposNFCE, camposNFE } from "../config";
+import { campos0200, camposC100, camposC170, camposH010, camposNFCE, camposNFE } from "../config";
 
 
 export interface ReadFile {
@@ -163,6 +163,7 @@ export class ReadFileSPED implements ReadFile {
     name = "SPED";
     periodo = '';
     dataInventario = ''
+    chave = ''
 
     validate(line: string) {
         return line.startsWith('|0000|')
@@ -179,7 +180,7 @@ export class ReadFileSPED implements ReadFile {
     async onReadLines(lines: string[], db: Database) {
 
 
-        const registros = ['0000', 'E110', 'E111', 'C100', 'H005', 'H010', '0200']
+        const registros = ['0000', 'E110', 'E111', 'C100', 'H005', 'H010', '0200', 'C170']
 
         const lineAbertura = lines.find(f => f.startsWith('|0000|'))
 
@@ -200,11 +201,16 @@ export class ReadFileSPED implements ReadFile {
             this.dataInventario = partes[2]
         }
 
+        const lineDocumentos = lines.find(f => f.startsWith('|C100|'))
+        if(lineDocumentos) {
+            const partes = lineDocumentos.split('|')
+
+            this.chave = partes[9];
+        }
+
+
         const linesSelecionadas = lines.filter(l => {
             const partes = l.split('|')
-
-
-
             return registros.includes(partes[1])
         })
 
@@ -212,13 +218,17 @@ export class ReadFileSPED implements ReadFile {
 
         if (linesSelecionadas.length > 0) {
             const values = linesSelecionadas.map(l => {
-                const partes = l.split('|')
+                const partes = l.split('|').map(l => l.trim().replace(/'/g, ""))
+
+                if(partes[1] == 'C170') {
+                    partes[0] = this.chave
+                }
 
 
                 return `('${partes[1]}', '${this.periodo}', '${JSON.stringify(partes)}')`
             })
 
-
+            // console.log(`insert into sped_temp (registro, periodo, line) values ${values.join(',')}`)
 
             await db.execute(`insert into sped_temp (registro, periodo, line) values ${values.join(',')}`)
         }
@@ -252,6 +262,7 @@ export class ReadFileSPED implements ReadFile {
         const values = camposC100.map(mapValues)
         const values0200 = campos0200.map(mapValues)
         const valuesH010 = camposH010.map(mapValues)
+        const valuesC170 = camposC170.map(mapValues)
 
         // const rows = await db.select(`select count(*) as c from sped_temp where registro = 'C100'`)
 
@@ -263,6 +274,18 @@ export class ReadFileSPED implements ReadFile {
         await db.execute(`
             insert or ignore into produtos (${campos0200.map(c => c.name).join(`,`)}) select ${values0200.join(',')}
           from sped_temp where registro = '0200'
+        `);
+
+        // console.log({valuesC170})
+
+        return;
+       
+        await db.execute(`
+            insert or ignore into items (ID, CHAVE_ACESSO, ${camposC170.map(c => c.name).join(`,`)}) select 
+            concat(json_extract(line, '$[0]'), ':',json_extract(line, '$[2]')) as ID, 
+            json_extract(line, '$[0]') as CHAVE_ACESSO,
+            ${valuesC170.join(`,`)}
+          from sped_temp where registro = 'C170'
         `);
 
         await db.execute(`
@@ -304,7 +327,7 @@ export class ReadFileSPED implements ReadFile {
             from sped_temp where registro = 'E110'    
         `)
 
-        await db.execute('drop table if exists sped_temp');
+        // await db.execute('drop table if exists sped_temp');
     }
 
 }

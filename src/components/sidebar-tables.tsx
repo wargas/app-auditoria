@@ -10,6 +10,7 @@ import { Store } from '@tauri-apps/plugin-store';
 import { useConsulta } from './consultas-provider';
 import { InputGroup, InputGroupAddon, InputGroupInput } from './ui/input-group';
 import { sortBy } from 'lodash';
+import emitter from '#lib/emitter';
 
 const menus = [
     {
@@ -93,12 +94,20 @@ export function SidebarTables() {
         setMenu(_menu)
     }
 
-    function sendSQL(sql: string) {
+    function sendSQL(sql: string, autoRun = false) {
         const id = addTab()
 
         changeTabSQL(id, sql)
 
         activeTab(id)
+
+        if (autoRun) {
+
+            setTimeout(() => {
+                emitter.emit(`run-${id}`, true)
+            }, 10)
+        }
+
     }
 
 
@@ -132,7 +141,7 @@ export function SidebarTables() {
                     <SidebarGroupLabel>
                         Tabelas</SidebarGroupLabel>
                     <SidebarGroupAction>
-                        <Button onClick={() => client.refetchQueries({queryKey: ["tables"]})} size={`icon-xs`} variant={`ghost`}><RefreshCw /></Button>
+                        <Button onClick={() => client.refetchQueries({ queryKey: ["tables"] })} size={`icon-xs`} variant={`ghost`}><RefreshCw /></Button>
                     </SidebarGroupAction>
                     <SidebarGroupContent>
                         <SidebarMenu>
@@ -140,7 +149,7 @@ export function SidebarTables() {
                                 <InputGroup>
                                     <InputGroupInput value={searchTable} onChange={e => setSearchTable(e.target.value)} />
                                     <InputGroupAddon align={'inline-end'}>
-                                        <Filter  />
+                                        <Filter />
                                     </InputGroupAddon>
                                 </InputGroup>
                             </SidebarMenuItem>
@@ -167,7 +176,7 @@ export function SidebarTables() {
                                                 <ContextMenuItem onClick={() => sendSQL(item.sql)}>
                                                     SQL Create
                                                 </ContextMenuItem>
-                                                <ContextMenuItem onClick={() => sendSQL(`select * from ${item.name}`)}>
+                                                <ContextMenuItem onClick={() => sendSQL(`select * from ${item.name}`, true)}>
                                                     Mostrar dados
                                                 </ContextMenuItem>
                                                 <ContextMenuItem>

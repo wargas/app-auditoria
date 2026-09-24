@@ -1,5 +1,5 @@
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarRail, SidebarSeparator, useSidebar } from "#components/ui/sidebar"
-import { ChartArea, Code2, FileText, HomeIcon, LogOut, Settings, Upload } from "lucide-react"
+import { ChartArea, Code2, FileText, HomeIcon, LogOut, Settings, ShoppingBag, Upload } from "lucide-react"
 import { Link, useLocation } from "react-router"
 import { WebviewWindow } from "@tauri-apps/api/webviewWindow"
 import { useMemo } from "react"
@@ -25,7 +25,7 @@ export function AppSidebar() {
 
     async function fecharProjeto() {
         setProject("")
-        await client.refetchQueries({queryKey: ["db"]})
+        await client.refetchQueries({ queryKey: ["db"] })
     }
 
     return <Sidebar variant="sidebar" collapsible="icon" className="top-(--header-height) h-[calc(100svh-var(--header-height))]!">
@@ -85,15 +85,15 @@ export function AppSidebar() {
 
                             </SidebarMenuButton>
                         </SidebarMenuItem>
-                        <SidebarSeparator />
                         <SidebarMenuItem>
-                            <SidebarMenuButton isActive={pathname == '/import-csv'} asChild size={menuSize}>
-                                <Link to={`/import-csv`}>
-                                    <Settings />
-                                    Importar CSV
+                            <SidebarMenuButton isActive={pathname == '/estoque'} asChild size={menuSize}>
+                                <Link to={`/estoque`}>
+                                    <ShoppingBag />
+                                    Analitico Estoque
                                 </Link>
                             </SidebarMenuButton>
                         </SidebarMenuItem>
+                        <SidebarSeparator />
                         <SidebarMenuItem>
                             <SidebarMenuButton isActive={pathname == '/settings'} asChild size={menuSize}>
                                 <Link to={`/settings`}>
