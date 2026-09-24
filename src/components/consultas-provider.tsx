@@ -76,6 +76,17 @@ export function ConsultasProvider({ children }: ComponentProps<"div">) {
         }
     })
 
+    const querySqliteFunctions = useQuery({
+        queryKey: ['sqlite-functions'],
+        queryFn: async () => {
+            const query = await db.select<any[]>(`SELECT DISTINCT name 
+                FROM pragma_function_list() 
+                ORDER BY name;`)
+
+            return query
+        }
+    })
+
     function updateTables() {
         querySchema.refetch()
     }
@@ -117,14 +128,32 @@ export function ConsultasProvider({ children }: ComponentProps<"div">) {
 
         const schema = querySchema.data;
 
-        if(!schema) return;
+        if (!schema) return;
         if (!monaco) return;
+
+        const providerFunctions = monaco.languages.registerCompletionItemProvider('sql', {
+            provideCompletionItems(model, position) {
+                const word = model.getWordUntilPosition(position)
+                const suggestions = querySqliteFunctions.data?.map(k => ({
+                    label: k.name,
+                    kind: monaco.languages.CompletionItemKind.Function,
+                    insertText: k.name,
+                    range: {
+                        startLineNumber: position.lineNumber,
+                        endLineNumber: position.lineNumber,
+                        startColumn: word.startColumn,
+                        endColumn: word.endColumn
+                    }
+                })) ?? []
+                return { suggestions: suggestions }
+            }
+        })
 
         const providerSqlite = monaco.languages.registerCompletionItemProvider('sql', {
             provideCompletionItems(model, position) {
                 const word = model.getWordUntilPosition(position)
 
-                const keywords = ["ABORT", "ACTION", "ADD", "AFTER", "ALL", "ALTER", "ALWAYS", "ANALYZE", "AND", "AS", "ASC", "ATTACH", "AUTOINCREMENT", "BEFORE", "BEGIN", "BETWEEN", "BY", "CASCADE", "CASE", "CAST", "CHECK", "COLLATE", "COLUMN", "COMMIT", "CONFLICT", "CONSTRAINT", "CREATE", "CROSS", "CURRENT", "CURRENT_DATE", "CURRENT_TIME", "CURRENT_TIMESTAMP", "DATABASE", "DEFAULT", "DEFERRABLE", "DEFERRED", "DELETE", "DESC", "DETACH", "DISTINCT", "DO", "DROP", "EACH", "ELSE", "END", "ESCAPE", "EXCEPT", "EXCLUDE", "EXCLUSIVE", "EXISTS", "EXPLAIN", "FAIL", "FILTER", "FIRST", "FOLLOWING", "FOR", "FOREIGN", "FROM", "FULL", "GENERATED", "GLOB", "GROUP", "GROUPS", "HAVING", "IIF", "IF", "IGNORE", "IMMEDIATE", "IN", "INDEX", "INDEXED", "INITIALLY", "INNER", "INSERT", "INSTEAD", "INTERSECT", "INTO", "IS", "ISNULL", "JOIN", "KEY", "LAST", "LEFT", "LIKE", "LIMIT", "MATCH", "MATERIALIZED", "NATURAL", "NO", "NOT", "NOTHING", "NOTNULL", "NULL", "NULLS", "OF", "OFFSET", "ON", "OR", "ORDER", "OTHERS", "OUTER", "OVER", "PARTITION", "PLAN", "PRAGMA", "PRECEDING", "PRIMARY", "QUERY", "RAISE", "RANGE", "RECURSIVE", "REFERENCES", "REGEXP", "REINDEX", "RELEASE", "RENAME", "REPLACE", "RESTRICT", "RETURNING", "RIGHT", "ROLLBACK", "ROW", "ROWS", "SAVEPOINT", "SELECT", "SET", "TABLE", "TEMP", "TEMPORARY", "THEN", "TIES", "TO", "TRANSACTION", "TRIGGER", "UNBOUNDED", "UNION", "UNIQUE", "UPDATE", "USING", "VACUUM", "VALUES", "VIEW", "VIRTUAL", "WHEN", "WHERE", "WINDOW", "WITH", "WITHOUT", "SUM", "AVG", "COUNT", "MAX", "MIN", "SUBSTR", ];
+                const keywords = ["ABORT", "ACTION", "ADD", "AFTER", "ALL", "ALTER", "ALWAYS", "ANALYZE", "AND", "AS", "ASC", "ATTACH", "AUTOINCREMENT", "BEFORE", "BEGIN", "BETWEEN", "BY", "CASCADE", "CASE", "CAST", "CHECK", "COLLATE", "COLUMN", "COMMIT", "CONFLICT", "CONSTRAINT", "CREATE", "CROSS", "CURRENT", "CURRENT_DATE", "CURRENT_TIME", "CURRENT_TIMESTAMP", "DATABASE", "DEFAULT", "DEFERRABLE", "DEFERRED", "DELETE", "DESC", "DETACH", "DISTINCT", "DO", "DROP", "EACH", "ELSE", "END", "ESCAPE", "EXCEPT", "EXCLUDE", "EXCLUSIVE", "EXISTS", "EXPLAIN", "FAIL", "FILTER", "FIRST", "FOLLOWING", "FOR", "FOREIGN", "FROM", "FULL", "GENERATED", "GLOB", "GROUP", "GROUPS", "HAVING", "IIF", "IF", "IGNORE", "IMMEDIATE", "IN", "INDEX", "INDEXED", "INITIALLY", "INNER", "INSERT", "INSTEAD", "INTERSECT", "INTO", "IS", "ISNULL", "JOIN", "KEY", "LAST", "LEFT", "LIKE", "LIMIT", "MATCH", "MATERIALIZED", "NATURAL", "NO", "NOT", "NOTHING", "NOTNULL", "NULL", "NULLS", "OF", "OFFSET", "ON", "OR", "ORDER", "OTHERS", "OUTER", "OVER", "PARTITION", "PLAN", "PRAGMA", "PRECEDING", "PRIMARY", "QUERY", "RAISE", "RANGE", "RECURSIVE", "REFERENCES", "REGEXP", "REINDEX", "RELEASE", "RENAME", "REPLACE", "RESTRICT", "RETURNING", "RIGHT", "ROLLBACK", "ROW", "ROWS", "SAVEPOINT", "SELECT", "SET", "TABLE", "TEMP", "TEMPORARY", "THEN", "TIES", "TO", "TRANSACTION", "TRIGGER", "UNBOUNDED", "UNION", "UNIQUE", "UPDATE", "USING", "VACUUM", "VALUES", "VIEW", "VIRTUAL", "WHEN", "WHERE", "WINDOW", "WITH", "WITHOUT"];
 
                 const suggestions = keywords.map(k => ({
                     label: k,
@@ -169,7 +198,7 @@ export function ConsultasProvider({ children }: ComponentProps<"div">) {
 
         });
 
-       const providerColumns = monaco.languages.registerCompletionItemProvider('sql', {
+        const providerColumns = monaco.languages.registerCompletionItemProvider('sql', {
             triggerCharacters: ['.', ' '],
             provideCompletionItems(model, position, _context, _token) {
 
@@ -179,8 +208,8 @@ export function ConsultasProvider({ children }: ComponentProps<"div">) {
 
                 let tableName = _.last(line.trim().split(' '))?.replace(/.$/g, "") ?? ""
 
-                if(tableName.includes("(")) {
-                    tableName = tableName.substring(tableName.lastIndexOf("(")+1).replace(/\./g, "")
+                if (tableName.includes("(")) {
+                    tableName = tableName.substring(tableName.lastIndexOf("(") + 1).replace(/\./g, "")
                 }
 
                 // info(tableName!)
@@ -237,9 +266,10 @@ export function ConsultasProvider({ children }: ComponentProps<"div">) {
             providerTables.dispose()
             providerColumns.dispose()
             providerSqlite.dispose()
+            providerFunctions.dispose()
         }
 
-    }, [monaco, querySchema.data])
+    }, [monaco, querySchema.data, querySqliteFunctions.data])
 
     return <Context value={{ activeTab, changeTabSQL, fecharTab, tabs, addTab, updateTables, schema: querySchema.data ?? [] }}>
         {children}

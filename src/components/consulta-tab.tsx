@@ -53,6 +53,7 @@ export function ConsultaTab({ id }: Props) {
                     includeNewlines: true
                 })
 
+                
                 const executeStmts = cst.statements.filter(c => c.type != 'select_stmt' && c.type != 'empty')
 
                 
@@ -71,12 +72,16 @@ export function ConsultaTab({ id }: Props) {
                     // queryTables.refetch()
                 }
 
-                const selectStmt = cst.statements.find(c => c.type == 'select_stmt')
+                const selectStmt = cst.statements.find(c => c.type == 'select_stmt' || c.type == 'compound_select_stmt')
 
+                console.log({cst, selectStmt})
 
                 if (!selectStmt) return { result: [], count: 0 }
 
                 const select = show(selectStmt).trim()
+
+                console.log({select})
+
 
                 const story = await Store.load(`history.json`)
 
@@ -90,8 +95,6 @@ export function ConsultaTab({ id }: Props) {
                 const offset = (page - 1) * limit
 
                 const queryWrap = `select * from (${select}) limit ${offset}, ${limit}`
-
-                console.log({ queryWrap })
 
                 const query = await db.select<any[]>(queryWrap)
 
