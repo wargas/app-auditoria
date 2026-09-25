@@ -16,13 +16,15 @@ import { create } from "@tauri-apps/plugin-fs"
 import { save } from "@tauri-apps/plugin-dialog"
 import _ from "lodash"
 import { ColDef } from "ag-grid-community"
-import {  useSql } from "./consultas-provider"
+import { useSql } from "./consultas-provider"
 import { info } from "@tauri-apps/plugin-log"
 import emitter from "#lib/emitter"
 
 type Props = {
     id: string
 }
+
+const LIMIT_RESULTS = 1000
 
 export function ConsultaTab({ id }: Props) {
     const app = useApp()
@@ -36,10 +38,10 @@ export function ConsultaTab({ id }: Props) {
     const [hashQuery, setHashQuery] = useState('')
 
     const queryResult = useQuery({
-        queryKey: ['query-result', hashQuery],
+        queryKey: ['query-result', page, hashQuery],
         queryFn: async () => {
             info(`rodando SQL`)
-            if(hashQuery == '') return {};
+            if (hashQuery == '') return {};
             setError('')
             try {
 
@@ -53,10 +55,10 @@ export function ConsultaTab({ id }: Props) {
                     includeNewlines: true
                 })
 
-                
+
                 const executeStmts = cst.statements.filter(c => c.type != 'select_stmt' && c.type != 'empty')
 
-                
+
                 for await (const stmt of executeStmts) {
                     const sql = show(stmt).trim();
 
@@ -66,22 +68,19 @@ export function ConsultaTab({ id }: Props) {
 
                 }
 
-                if(executeStmts.length > 0) {
+                if (executeStmts.length > 0) {
 
-                    queryClient.refetchQueries({queryKey: ['tables']})
+                    queryClient.refetchQueries({ queryKey: ['tables'] })
                     // queryTables.refetch()
                 }
 
                 const selectStmt = cst.statements.find(c => c.type == 'select_stmt' || c.type == 'compound_select_stmt')
 
-                console.log({cst, selectStmt})
+                console.log({ cst, selectStmt })
 
                 if (!selectStmt) return { result: [], count: 0 }
 
                 const select = show(selectStmt).trim()
-
-                console.log({select})
-
 
                 const story = await Store.load(`history.json`)
 
@@ -91,10 +90,11 @@ export function ConsultaTab({ id }: Props) {
 
                 await queryClient.refetchQueries({ queryKey: ['sql-history'] })
 
-                const limit = 1000;
+                const limit = LIMIT_RESULTS;
                 const offset = (page - 1) * limit
 
                 const queryWrap = `select * from (${select}) limit ${offset}, ${limit}`
+
 
                 const query = await db.select<any[]>(queryWrap)
 
@@ -120,6 +120,8 @@ export function ConsultaTab({ id }: Props) {
         },
         placeholderData: keepPreviousData
     })
+
+    const last_page = useMemo(() => Math.floor((queryResult.data?.count ?? 0) / LIMIT_RESULTS) + 1, [queryResult.data])
 
     const mutationExportCSV = useMutation({
         mutationFn: async (path: string) => {
@@ -164,7 +166,7 @@ export function ConsultaTab({ id }: Props) {
 
         const cols = Object.keys(result[0]).map(k => {
             return { field: k, headerName: k.toUpperCase() }
-        }).map((c:ColDef) => {
+        }).map((c: ColDef) => {
 
             if (c.field == '#') {
                 return { ...c, width: 100, pinned: 'left' }
@@ -196,9 +198,11 @@ export function ConsultaTab({ id }: Props) {
 
     const handleSendSQL = useCallback(() => {
 
+        setPage(1)
+
         setHashQuery(crypto.randomUUID())
 
-        
+
     }, [sql])
 
     async function handleChangeEditor(value: string | undefined) {
@@ -206,6 +210,13 @@ export function ConsultaTab({ id }: Props) {
         // info(`hadle change SQL`)
         setSQL(value)
     }
+
+    const handleF5Click = useCallback((sql: string) => {
+        info(`F5`)
+        setSQL(sql)
+        setPage(1)
+        handleSendSQL()
+    }, [page, sql])
 
     useEffect(() => {
         const listener = emitter.on(`run-${id}`, () => {
@@ -221,17 +232,13 @@ export function ConsultaTab({ id }: Props) {
         }
     }, [id])
 
-    
+
     return <ResizablePanelGroup orientation='vertical'>
         <ResizablePanel defaultSize={'50%'} className='relative'>
             <div className='absolute top-0 right-0 left-0 bottom-10'>
                 <EditorSql
                     theme={theme as 'dark'}
-                    onF5={(s) => {
-                        info(`F5`)
-                        setSQL(s)
-                        handleSendSQL()
-                    }}
+                    onF5={handleF5Click}
                     value={sql}
                     onChangeSQL={handleChangeEditor}
                 />
@@ -264,13 +271,13 @@ export function ConsultaTab({ id }: Props) {
                     {message}
                 </span>
                 <div className='flex mx-auto'>
-                    <Button variant={'ghost'} onClick={() => setPage(p => Math.max(1, p - 1))}>
+                    <Button variant={'ghost'} disabled={page == 1} onClick={() => setPage(p => Math.max(1, p - 1))}>
                         <ChevronLeft />
                     </Button>
                     <div className='w-20'>
                         <Input value={page} onChange={t => setPage(parseInt(t.target.value))} className='text-center' />
                     </div>
-                    <Button variant={'ghost'} onClick={() => setPage(p => p + 1)}>
+                    <Button variant={'ghost'} disabled={page == last_page} onClick={() => setPage(p => Math.min(p + 1, last_page))}>
                         <ChevronRight />
                     </Button>
                 </div>
