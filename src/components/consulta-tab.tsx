@@ -141,6 +141,10 @@ export function ConsultaTab({ id }: Props) {
                     const dataRow = Object.values(row).map(v => {
                         if (String(v).match(/^\d{10,}$/)) return `="${v}"`;
 
+                        if('number' == typeof v) {
+                            return v.toLocaleString('pt-BR')
+                        }
+
                         return v
                     })
                     await fileHandle.write(new TextEncoder().encode("\n" + dataRow.join(";")))

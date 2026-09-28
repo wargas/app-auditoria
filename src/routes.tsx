@@ -1,14 +1,6 @@
 import { createHashRouter } from 'react-router'
 export const routes = createHashRouter([
-    // {
-    //     path: '/',
-    //     lazy: () => import('./routes/project-home')
-    // },
-    // {
-    //     path: '/form-project',
-    //     lazy: () => import('./routes/form-projeto.router')
-    // },
-    {
+       {
         path: '/',
         lazy: () => import('./routes/app-layout'),
         children: [
