@@ -3,7 +3,7 @@ import { DialogSaveSQL } from "./dialog-save-sql"
 import { useTheme } from "./theme-provider"
 import { Button } from "./ui/button"
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "./ui/resizable"
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useApp } from "../app-context"
 import { show, parse } from "sql-parser-cst"
 import { Store } from "@tauri-apps/plugin-store"
@@ -53,7 +53,7 @@ function editorTheme(dark: boolean) {
         },
         ".cm-content": {
             fontFamily: "'JetBrains Mono Variable', monospace",
-            ...dark ? { backgroundColor: 'oklch(20.463% 0.00002 271.152);'} : {}
+            ...dark ? { backgroundColor: 'oklch(20.463% 0.00002 271.152);' } : {}
         }
     });
 }
@@ -70,6 +70,9 @@ export function ConsultaTab({ id }: Props) {
     const [hashQuery, setHashQuery] = useState('')
     const { schema } = useConsulta()
     const [editorH, setEditorH] = useState(0)
+    const [mode, setMode] = useState<"ALL" | "SELECTION">("ALL")
+
+    const refEditor = useRef<EditorView>(null)
 
     const queryResult = useQuery({
         queryKey: ['query-result', page, hashQuery],
@@ -80,7 +83,17 @@ export function ConsultaTab({ id }: Props) {
             try {
 
                 const timeStart = new Date().getTime()
-                const sqlText = sql
+
+
+                let sqlText = sql
+
+                if (refEditor.current && mode == "SELECTION") {
+                    const { from, to } = refEditor.current?.state.selection.main
+
+                    const textSelected = refEditor.current.state.sliceDoc(from, to)
+
+                    sqlText = textSelected
+                }
 
                 const cst = parse(sqlText, {
                     dialect: 'sqlite',
@@ -234,7 +247,9 @@ export function ConsultaTab({ id }: Props) {
         await mutationExportCSV.mutateAsync(res)
     }
 
-    const handleSendSQL = useCallback(() => {
+    const handleSendSQL = useCallback((mode = "ALL") => {
+
+        setMode(mode as "ALL")
 
         setPage(1)
 
@@ -246,15 +261,11 @@ export function ConsultaTab({ id }: Props) {
     async function handleChangeEditor(value: string | undefined) {
         if (!value) return;
         // info(`hadle change SQL`)
+
         setSQL(value)
     }
 
-    const handleF5Click = useCallback((sql: string) => {
-        info(`F5`)
-        setSQL(sql)
-        setPage(1)
-        handleSendSQL()
-    }, [page, sql])
+    
 
     useEffect(() => {
         const listener = emitter.on(`run-${id}`, () => {
@@ -291,7 +302,17 @@ export function ConsultaTab({ id }: Props) {
             mac: "Cmd-Enter",
             win: "Ctrl-Enter",
             run: _view => {
-                handleF5Click(sql)
+                handleSendSQL("ALL")
+
+                return true
+            }
+        },
+        {
+            key: "Mod-Shift-Enter",
+            mac: "Cmd-Shift-Enter",
+            win: "Ctrl-Shift-Enter",
+            run: _view => {
+                handleSendSQL("SELECTION")
 
                 return true
             }
@@ -299,7 +320,15 @@ export function ConsultaTab({ id }: Props) {
         {
             key: "F5",
             run: _view => {
-                handleF5Click(sql)
+                handleSendSQL("ALL")
+
+                return true
+            }
+        },
+        {
+            key: "Shift-F5",
+            run: _view => {
+                handleSendSQL("SELECTION")
 
                 return true
             }
@@ -311,6 +340,7 @@ export function ConsultaTab({ id }: Props) {
             <div className='absolute top-0 right-0 left-0 bottom-10 overflow-y-scroll'>
                 <ReactCodeMirror
                     value={sql}
+                    onCreateEditor={view => refEditor.current = view}
                     onChange={handleChangeEditor}
                     extensions={[
                         ...extensions,
@@ -320,15 +350,20 @@ export function ConsultaTab({ id }: Props) {
                         ...theme == "dark" ? [oneDark] : []
                     ]}
                     height={`${editorH}px`} />
-              
+
             </div>
             <div style={{ height: `50px` }} className='absolute right-0 border-t left-0 bottom-0 flex gap-2 justify-end items-center px-2'>
 
                 <DialogSaveSQL sql={sql} />
 
-                <Button onClick={() => handleSendSQL()} variant={'outline'}>
+                <Button onClick={() => handleSendSQL("SELECTION")} variant={'outline'}>
                     {queryResult.isFetching && (<Spinner />)}
-                    Executar
+                    Executar Selecionado
+                </Button>
+
+                <Button onClick={() => handleSendSQL("ALL")} variant={'outline'}>
+                    {queryResult.isFetching && (<Spinner />)}
+                    Executar Tudo
                 </Button>
             </div>
         </ResizablePanel>
@@ -341,7 +376,7 @@ export function ConsultaTab({ id }: Props) {
                 {error && (<div className='h-full p-4 items-center justify-center text-gray-400 flex'>{error.trim()}</div>)}
                 {error == '' && (
                     <Grid
-                    
+
                         // onSortChanged={handleChangeSort} 
                         columnDefs={columns} autoGenerateColumnDefs={false} rowData={queryResult.data?.result || []} />
                 )}
