@@ -295,6 +295,14 @@ export function ConsultaTab({ id }: Props) {
 
                 return true
             }
+        },
+        {
+            key: "F5",
+            run: _view => {
+                handleF5Click(sql)
+
+                return true
+            }
         }
     ]))
 
@@ -312,12 +320,7 @@ export function ConsultaTab({ id }: Props) {
                         ...theme == "dark" ? [oneDark] : []
                     ]}
                     height={`${editorH}px`} />
-                {/* <EditorSql
-                    theme={theme as 'dark'}
-                    onF5={handleF5Click}
-                    value={sql}
-                    onChangeSQL={handleChangeEditor}
-                /> */}
+              
             </div>
             <div style={{ height: `50px` }} className='absolute right-0 border-t left-0 bottom-0 flex gap-2 justify-end items-center px-2'>
 
