@@ -1,6 +1,5 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { DialogSaveSQL } from "./dialog-save-sql"
-import { EditorSql } from "./editor-sql"
 import { useTheme } from "./theme-provider"
 import { Button } from "./ui/button"
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "./ui/resizable"
@@ -16,15 +15,45 @@ import { create } from "@tauri-apps/plugin-fs"
 import { save } from "@tauri-apps/plugin-dialog"
 import _ from "lodash"
 import { ColDef } from "ag-grid-community"
-import { useSql } from "./consultas-provider"
+import { useConsulta, useSql } from "./consultas-provider"
 import { info } from "@tauri-apps/plugin-log"
 import emitter from "#lib/emitter"
+import { sql as sqlLang, SQLite } from "@codemirror/lang-sql"
+import ReactCodeMirror, { EditorView, oneDark, keymap, Prec } from "@uiw/react-codemirror";
 
 type Props = {
     id: string
 }
 
 const LIMIT_RESULTS = 1000
+
+const extensions = [
+
+    EditorView.theme({
+        "&": {
+            fontFamily: "'Inter Variable', monospace",
+            fontSize: "16px"
+        },
+        ".cm-content": {
+            fontFamily: "'JetBrains Mono Variable', monospace",
+            // backgroundColor: 'oklch(20.463% 0.00002 271.152);'
+        }
+    }),
+    // oneDark
+]
+
+function editorTheme(dark: boolean) {
+    return EditorView.theme({
+        "&": {
+            fontFamily: "'Inter Variable', monospace",
+            fontSize: "16px"
+        },
+        ".cm-content": {
+            fontFamily: "'JetBrains Mono Variable', monospace",
+            ...dark ? { backgroundColor: 'oklch(20.463% 0.00002 271.152);'} : {}
+        }
+    });
+}
 
 export function ConsultaTab({ id }: Props) {
     const app = useApp()
@@ -36,6 +65,8 @@ export function ConsultaTab({ id }: Props) {
     const [error, setError] = useState('')
     const queryClient = useQueryClient()
     const [hashQuery, setHashQuery] = useState('')
+    const { schema } = useConsulta()
+    const [editorH, setEditorH] = useState(0)
 
     const queryResult = useQuery({
         queryKey: ['query-result', page, hashQuery],
@@ -141,7 +172,7 @@ export function ConsultaTab({ id }: Props) {
                     const dataRow = Object.values(row).map(v => {
                         if (String(v).match(/^\d{10,}$/)) return `="${v}"`;
 
-                        if('number' == typeof v) {
+                        if ('number' == typeof v) {
                             return v.toLocaleString('pt-BR')
                         }
 
@@ -236,18 +267,56 @@ export function ConsultaTab({ id }: Props) {
         }
     }, [id])
 
+    const sqlExtension = useMemo(() => {
+
+        const sqlSchema: { [name: string]: string[] } = {}
+
+        schema.forEach(s => {
+            sqlSchema[s.name] = s.columns.map(c => c.name)
+        })
+
+        return sqlLang({
+            dialect: SQLite,
+            schema: sqlSchema,
+            upperCaseKeywords: true
+        })
+    }, [schema])
+
+    const hotKeys = Prec.highest(keymap.of([
+        {
+            key: "Mod-Enter",
+            mac: "Cmd-Enter",
+            win: "Ctrl-Enter",
+            run: _view => {
+                handleF5Click(sql)
+
+                return true
+            }
+        }
+    ]))
 
     return <ResizablePanelGroup orientation='vertical'>
-        <ResizablePanel defaultSize={'50%'} className='relative'>
-            <div className='absolute top-0 right-0 left-0 bottom-10'>
-                <EditorSql
+        <ResizablePanel onResize={s => setEditorH(s.inPixels - 50)} defaultSize={'50%'} className='relative'>
+            <div className='absolute top-0 right-0 left-0 bottom-10 overflow-y-scroll'>
+                <ReactCodeMirror
+                    value={sql}
+                    onChange={handleChangeEditor}
+                    extensions={[
+                        ...extensions,
+                        sqlExtension,
+                        hotKeys,
+                        editorTheme(theme == "dark"),
+                        ...theme == "dark" ? [oneDark] : []
+                    ]}
+                    height={`${editorH}px`} />
+                {/* <EditorSql
                     theme={theme as 'dark'}
                     onF5={handleF5Click}
                     value={sql}
                     onChangeSQL={handleChangeEditor}
-                />
+                /> */}
             </div>
-            <div className='absolute right-0 border-t left-0 h-10 bottom-0 flex gap-2 justify-end items-center px-2'>
+            <div style={{ height: `50px` }} className='absolute right-0 border-t left-0 bottom-0 flex gap-2 justify-end items-center px-2'>
 
                 <DialogSaveSQL sql={sql} />
 
