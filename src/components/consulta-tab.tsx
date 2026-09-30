@@ -18,8 +18,11 @@ import { ColDef } from "ag-grid-community"
 import { useConsulta, useSql } from "./consultas-provider"
 import { info } from "@tauri-apps/plugin-log"
 import emitter from "#lib/emitter"
-import { sql as sqlLang, SQLite } from "@codemirror/lang-sql"
+import { sql as sqlLang } from "@codemirror/lang-sql"
 import ReactCodeMirror, { EditorView, oneDark, keymap, Prec } from "@uiw/react-codemirror";
+import { SQLite } from "#lib/sqlite-dialect"
+
+
 
 type Props = {
     id: string
@@ -335,6 +338,7 @@ export function ConsultaTab({ id }: Props) {
                 {error && (<div className='h-full p-4 items-center justify-center text-gray-400 flex'>{error.trim()}</div>)}
                 {error == '' && (
                     <Grid
+                    
                         // onSortChanged={handleChangeSort} 
                         columnDefs={columns} autoGenerateColumnDefs={false} rowData={queryResult.data?.result || []} />
                 )}
