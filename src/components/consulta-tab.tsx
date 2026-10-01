@@ -7,7 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useApp } from "../app-context"
 import { show, parse } from "sql-parser-cst"
 import { Store } from "@tauri-apps/plugin-store"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react"
 import { Spinner } from "./ui/spinner"
 import { Grid } from "./grid"
 import { Input } from "./ui/input"
@@ -21,6 +21,8 @@ import emitter from "#lib/emitter"
 import { sql as sqlLang } from "@codemirror/lang-sql"
 import ReactCodeMirror, { EditorView, oneDark, keymap, Prec } from "@uiw/react-codemirror";
 import { SQLite } from "#lib/sqlite-dialect"
+import { ButtonGroup } from "./ui/button-group"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuShortcut, DropdownMenuTrigger } from "./ui/dropdown-menu"
 
 
 
@@ -265,7 +267,7 @@ export function ConsultaTab({ id }: Props) {
         setSQL(value)
     }
 
-    
+
 
     useEffect(() => {
         const listener = emitter.on(`run-${id}`, () => {
@@ -356,15 +358,30 @@ export function ConsultaTab({ id }: Props) {
 
                 <DialogSaveSQL sql={sql} />
 
-                <Button onClick={() => handleSendSQL("SELECTION")} variant={'outline'}>
-                    {queryResult.isFetching && (<Spinner />)}
-                    Executar Selecionado
-                </Button>
+                
+                <ButtonGroup>
+                    <Button onClick={() => handleSendSQL("ALL")} variant={'outline'}>
+                        {queryResult.isFetching && (<Spinner />)}
+                        Executar Tudo
+                    </Button>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant={`outline`}><ChevronDown /></Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-60">
+                            <DropdownMenuItem onClick={() => handleSendSQL("ALL")}>
+                                Executar tudo
 
-                <Button onClick={() => handleSendSQL("ALL")} variant={'outline'}>
-                    {queryResult.isFetching && (<Spinner />)}
-                    Executar Tudo
-                </Button>
+                                <DropdownMenuShortcut>⌘ Enter</DropdownMenuShortcut>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleSendSQL("SELECTION")}>
+                                Executar selecionado
+
+                                <DropdownMenuShortcut>⇧ ⌘ Enter</DropdownMenuShortcut>
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </ButtonGroup>
             </div>
         </ResizablePanel>
         <ResizableHandle withHandle />

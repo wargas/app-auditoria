@@ -36,7 +36,7 @@ export function DialogSaveSQL({ sql }:ComponentProps<"div"> & Props) {
     <DialogTrigger asChild>
         <Button variant={'outline'}>
             {mutationSaveSQL.isPending && (<Spinner />)}
-            Salvar consulta
+            Salvar
         </Button>
     </DialogTrigger>
     <DialogContent className="max-w-2xl!">
