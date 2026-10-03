@@ -276,9 +276,7 @@ export class ReadFileSPED implements ReadFile {
           from sped_temp where registro = '0200'
         `);
 
-        // console.log({valuesC170})
-
-        return;
+       
        
         await db.execute(`
             insert or ignore into items (ID, CHAVE_ACESSO, ${camposC170.map(c => c.name).join(`,`)}) select 
