@@ -201,12 +201,12 @@ export class ReadFileSPED implements ReadFile {
             this.dataInventario = partes[2]
         }
 
-        const lineDocumentos = lines.find(f => f.startsWith('|C100|'))
-        if(lineDocumentos) {
-            const partes = lineDocumentos.split('|')
+        // const lineDocumentos = lines.find(f => f.startsWith('|C100|'))
+        // if(lineDocumentos) {
+        //     const partes = lineDocumentos.split('|')
 
-            this.chave = partes[9];
-        }
+        //     this.chave = partes[9];
+        // }
 
 
         const linesSelecionadas = lines.filter(l => {
@@ -219,6 +219,10 @@ export class ReadFileSPED implements ReadFile {
         if (linesSelecionadas.length > 0) {
             const values = linesSelecionadas.map(l => {
                 const partes = l.split('|').map(l => l.trim().replace(/'/g, ""))
+
+                if(partes[1] == 'C100') {
+                    this.chave = partes[9]
+                }
 
                 if(partes[1] == 'C170') {
                     partes[0] = this.chave
@@ -276,10 +280,8 @@ export class ReadFileSPED implements ReadFile {
           from sped_temp where registro = '0200'
         `);
 
-       
-       
         await db.execute(`
-            insert or ignore into items (ID, CHAVE_ACESSO, ${camposC170.map(c => c.name).join(`,`)}) select 
+            insert into items (ID, CHAVE_ACESSO, ${camposC170.map(c => c.name).join(`,`)}) select 
             concat(json_extract(line, '$[0]'), ':',json_extract(line, '$[2]')) as ID, 
             json_extract(line, '$[0]') as CHAVE_ACESSO,
             ${valuesC170.join(`,`)}
