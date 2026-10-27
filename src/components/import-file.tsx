@@ -10,9 +10,12 @@ import { useApp } from "../app-context";
 import { getConfig } from "#lib/config";
 import { ReadFile, ReadFileNFCE, ReadFileNFE, ReadFileSPED } from "#lib/read-files";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
-import _ from "lodash";
+import _, { last } from "lodash";
 import { Progress } from "./ui/progress";
 import { Badge } from "./ui/badge";
+import { dirname } from "@tauri-apps/api/path";
+import { Store } from "@tauri-apps/plugin-store";
+
 
 type File = {
     path: string,
@@ -39,12 +42,28 @@ export function ImportFile() {
 
 
     async function selectFiles() {
+
+        const key = `${app.db?.path}-last-dir-files`
+        
+        const store = await Store.load('app.json')
+
+        const pathDb = await dirname(app.db?.path!)
+        const lastPathFile = await store.get<string>(key)
+
+        console.log(lastPathFile)
+
         const files = await open({
             multiple: true,
-            directory: false
+            directory: false,
+            defaultPath: lastPathFile ?? pathDb
         })
 
+        
         if (!files) return;
+        
+        const dir = await dirname(last(files)!)
+
+        store.set(key, dir)
 
         mutatePreparar.mutate(files)
     }

@@ -84,10 +84,41 @@
     "clipboard-manager:allow-write-text",
     "fs:allow-exists",
     {
+      "identifier": "fs:scope",
+      "allow": [
+        {
+          "path": "/**"
+        },
+        {
+          "path": "$HOME/**"
+        },
+        {
+          "path": "C:/**"
+        },
+        {
+          "path": "D:/**"
+        },
+        {
+          "path": "E:/**"
+        },
+        {
+          "path": "F:/**"
+        },
+        {
+          "path": "G:/**"
+        },
+        {
+          "path": "H:/**"
+        }
+      ]
+    },
+    {
       "identifier": "opener:allow-open-path",
-      "allow": [{
-        "path": "*"
-      }]
+      "allow": [
+        {
+          "path": "*"
+        }
+      ]
     }
   ]
 }

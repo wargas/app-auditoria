@@ -281,7 +281,7 @@ export class ReadFileSPED implements ReadFile {
         `);
 
         await db.execute(`
-            insert into items (ID, CHAVE_ACESSO, ${camposC170.map(c => c.name).join(`,`)}) select 
+            insert or ignore into items (ID, CHAVE_ACESSO, ${camposC170.map(c => c.name).join(`,`)}) select 
             concat(json_extract(line, '$[0]'), ':',json_extract(line, '$[2]')) as ID, 
             json_extract(line, '$[0]') as CHAVE_ACESSO,
             ${valuesC170.join(`,`)}
@@ -327,7 +327,7 @@ export class ReadFileSPED implements ReadFile {
             from sped_temp where registro = 'E110'    
         `)
 
-        // await db.execute('drop table if exists sped_temp');
+        await db.execute('drop table if exists sped_temp');
     }
 
 }

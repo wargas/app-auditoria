@@ -59,7 +59,7 @@ export function Component() {
             await db.execute('drop table if exists nfce_sem_escrituracao; create table nfce_sem_escrituracao as select CHAVE_ACESSO from nfce where CHAVE_ACESSO not in (select CHV_NFE from sped_df)')
             await db.execute('drop table if exists nfe_sem_escrituracao; create table nfe_sem_escrituracao as select CHAVE_ACESSO from nfe where CHAVE_ACESSO not in (select CHV_NFE from sped_df)')
 
-            
+
 
             await db.execute(`
                 drop view if exists nfe_entrada;
@@ -105,23 +105,31 @@ export function Component() {
             </Button>
         </div>
 
+        <div>
+            <Field className="flex-5">
+                <FieldLabel>PROJETO</FieldLabel>
+
+                <Input value={db.path.replace('sqlite:/', '')} />
+            </Field>
+        </div>
+
         <div className="flex gap-4">
             <Field className="flex-5">
                 <FieldLabel>CNPJ</FieldLabel>
 
-                <Input  value={queryCadastro.data?.CNPJ} />
+                <Input defaultValue={queryCadastro.data?.CNPJ} />
             </Field>
 
             <Field className="flex-12">
                 <FieldLabel>NOME</FieldLabel>
 
-                <Input disabled value={queryCadastro.data?.NOME} />
+                <Input defaultValue={queryCadastro.data?.NOME} />
             </Field>
 
             <Field className="flex-4">
                 <FieldLabel>IE</FieldLabel>
 
-                <Input disabled value={queryCadastro.data?.IE} />
+                <Input defaultValue={queryCadastro.data?.IE} />
             </Field>
         </div>
 
